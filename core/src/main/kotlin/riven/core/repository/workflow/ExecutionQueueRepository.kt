@@ -105,7 +105,7 @@ interface ExecutionQueueRepository : JpaRepository<ExecutionQueueEntity, UUID> {
 
     /**
      * Bulk-enqueue ENRICHMENT items for every non-INTEGRATION, non-deleted entity of a given type
-     * in a workspace. Used by manifest reconciliation to invalidate envelopes after a schema change.
+     * in a workspace. Used by manifest reconciliation to invalidate snapshots after a schema change.
      *
      * Single `INSERT ... SELECT` to avoid N+1 at high entity-type cardinality. The partial unique
      * index `uq_execution_queue_pending_identity_match` deduplicates against existing PENDING rows
@@ -134,24 +134,24 @@ interface ExecutionQueueRepository : JpaRepository<ExecutionQueueEntity, UUID> {
 
     /**
      * Enqueue ENRICHMENT items for every entity in [workspaceId] whose persisted
-     * connotation envelope's `axes.<axisName>.analysisVersion` does NOT match
+     * connotation snapshot's `metadata.<metadataKey>.analysisVersion` does NOT match
      * [currentVersion].
      *
      * `IS DISTINCT FROM` covers both "different version" and "null version stamp" without
-     * special-casing nulls. Excludes entities that don't yet have a connotation envelope row
+     * special-casing nulls. Excludes entities that don't yet have a connotation snapshot row
      * (those should be enqueued via the regular [enqueueEnrichmentByEntityType] path).
      *
-     * The [axisName] parameter is the JSON key used inside `connotation_metadata.axes` —
-     * the persisted envelope shape uses uppercase axis names (e.g. `"SENTIMENT"`,
+     * The [metadataKey] parameter is the JSON key used inside `connotation_metadata.metadata` —
+     * the persisted snapshot shape uses uppercase metadata-type names (e.g. `"SENTIMENT"`,
      * `"RELATIONAL"`, `"STRUCTURAL"`) per the `@JsonProperty` declarations on
-     * [riven.core.models.connotation.ConnotationAxes]. Callers must pass the matching
+     * [riven.core.models.connotation.ConnotationMetadata]. Callers must pass the matching
      * uppercase key — passing `"sentiment"` will match zero rows.
      *
      * Skips soft-deleted entities. Idempotent via `ON CONFLICT DO NOTHING` against the
      * partial unique index `uq_execution_queue_pending_identity_match` — running twice
      * inserts no duplicates while a prior PENDING row still exists.
      *
-     * @param axisName JSONB key of the axis to compare (e.g. `"SENTIMENT"`).
+     * @param metadataKey JSONB key of the metadata category to compare (e.g. `"SENTIMENT"`).
      * @param currentVersion Active analysis version string from configuration. Rows whose
      *   persisted version differs from this (including null) are enqueued.
      * @param workspaceId Workspace to scope the enqueue to.
@@ -166,13 +166,13 @@ interface ExecutionQueueRepository : JpaRepository<ExecutionQueueEntity, UUID> {
         FROM entity_connotation ec
         JOIN entities e ON e.id = ec.entity_id AND e.deleted = false
         WHERE ec.workspace_id = :workspaceId
-          AND (ec.connotation_metadata -> 'axes' -> :axisName ->> 'analysisVersion') IS DISTINCT FROM :currentVersion
+          AND (ec.connotation_metadata -> 'metadata' -> :metadataKey ->> 'analysisVersion') IS DISTINCT FROM :currentVersion
         ON CONFLICT DO NOTHING
         """,
         nativeQuery = true,
     )
-    fun enqueueByAxisVersionMismatch(
-        @Param("axisName") axisName: String,
+    fun enqueueByMetadataVersionMismatch(
+        @Param("metadataKey") metadataKey: String,
         @Param("currentVersion") currentVersion: String,
         @Param("workspaceId") workspaceId: UUID,
     ): Int

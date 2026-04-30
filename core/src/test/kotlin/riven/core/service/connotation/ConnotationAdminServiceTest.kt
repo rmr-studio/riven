@@ -19,7 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.configuration.properties.ConnotationAnalysisConfigurationProperties
 import riven.core.enums.activity.Activity
-import riven.core.enums.connotation.ConnotationAxisName
+import riven.core.enums.connotation.ConnotationMetadataType
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.enums.workspace.WorkspaceRoles
@@ -57,7 +57,7 @@ class ConnotationAdminServiceTest {
     class TestConfig {
         @Bean
         fun connotationAnalysisConfigurationProperties() = ConnotationAnalysisConfigurationProperties(
-            tier1CurrentVersion = "v2",
+            deterministicCurrentVersion = "v2",
         )
     }
 
@@ -77,10 +77,10 @@ class ConnotationAdminServiceTest {
     private lateinit var service: ConnotationAdminService
 
     @Test
-    fun `Tier 1 reanalyze enqueues mismatched rows and returns count`() {
+    fun `DETERMINISTIC reanalyze enqueues mismatched rows and returns count`() {
         whenever(
-            executionQueueRepository.enqueueByAxisVersionMismatch(
-                axisName = eq("SENTIMENT"),
+            executionQueueRepository.enqueueByMetadataVersionMismatch(
+                metadataKey = eq("SENTIMENT"),
                 currentVersion = eq("v2"),
                 workspaceId = eq(workspaceId),
             )
@@ -91,9 +91,9 @@ class ConnotationAdminServiceTest {
             )
         ).thenReturn(mock())
 
-        val count = service.reanalyzeAxisWhereVersionMismatch(
-            axis = ConnotationAxisName.SENTIMENT,
-            tier = AnalysisTier.TIER_1,
+        val count = service.reanalyzeWhereVersionMismatch(
+            metadataType = ConnotationMetadataType.SENTIMENT,
+            tier = AnalysisTier.DETERMINISTIC,
             workspaceId = workspaceId,
         )
 
@@ -111,40 +111,40 @@ class ConnotationAdminServiceTest {
             detailsCaptor.capture(),
         )
         val details = detailsCaptor.firstValue
-        assertEquals("SENTIMENT", details["axis"])
-        assertEquals("TIER_1", details["tier"])
+        assertEquals("SENTIMENT", details["metadataType"])
+        assertEquals("DETERMINISTIC", details["tier"])
         assertEquals("v2", details["currentVersion"])
         assertEquals(42, details["enqueued"])
     }
 
     @Test
-    fun `Tier 2 reanalyze throws NotImplementedError`() {
+    fun `CLASSIFIER reanalyze throws NotImplementedError`() {
         assertThrows<NotImplementedError> {
-            service.reanalyzeAxisWhereVersionMismatch(
-                axis = ConnotationAxisName.SENTIMENT,
-                tier = AnalysisTier.TIER_2,
+            service.reanalyzeWhereVersionMismatch(
+                metadataType = ConnotationMetadataType.SENTIMENT,
+                tier = AnalysisTier.CLASSIFIER,
                 workspaceId = workspaceId,
             )
         }
     }
 
     @Test
-    fun `RELATIONAL axis reanalyze throws IllegalArgumentException`() {
+    fun `RELATIONAL reanalyze throws IllegalArgumentException`() {
         assertThrows<IllegalArgumentException> {
-            service.reanalyzeAxisWhereVersionMismatch(
-                axis = ConnotationAxisName.RELATIONAL,
-                tier = AnalysisTier.TIER_1,
+            service.reanalyzeWhereVersionMismatch(
+                metadataType = ConnotationMetadataType.RELATIONAL,
+                tier = AnalysisTier.DETERMINISTIC,
                 workspaceId = workspaceId,
             )
         }
     }
 
     @Test
-    fun `STRUCTURAL axis reanalyze throws IllegalArgumentException`() {
+    fun `STRUCTURAL reanalyze throws IllegalArgumentException`() {
         assertThrows<IllegalArgumentException> {
-            service.reanalyzeAxisWhereVersionMismatch(
-                axis = ConnotationAxisName.STRUCTURAL,
-                tier = AnalysisTier.TIER_1,
+            service.reanalyzeWhereVersionMismatch(
+                metadataType = ConnotationMetadataType.STRUCTURAL,
+                tier = AnalysisTier.DETERMINISTIC,
                 workspaceId = workspaceId,
             )
         }

@@ -128,7 +128,7 @@ class ManifestResolverServiceConnotationTest {
     fun `parses LINEAR connotation signals when sentimentAttribute exists`() {
         val entityType = buildEntityType(
             connotationSignals = mapOf(
-                "tier" to "TIER_1",
+                "tier" to "DETERMINISTIC",
                 "sentimentAttribute" to "rating",
                 "sentimentScale" to linearSentimentScale(),
                 "themeAttributes" to listOf("tags")
@@ -141,7 +141,7 @@ class ManifestResolverServiceConnotationTest {
         val resolvedType = result.entityTypes.single()
         val signals = resolvedType.connotationSignals
         assertNotNull(signals, "connotationSignals should be parsed when sentimentAttribute matches")
-        assertEquals(AnalysisTier.TIER_1, signals!!.tier)
+        assertEquals(AnalysisTier.DETERMINISTIC, signals!!.tier)
         assertEquals("rating", signals.sentimentAttribute)
         assertEquals(listOf("tags"), signals.themeAttributes)
         assertEquals(ScaleMappingType.LINEAR, signals.sentimentScale.mappingType)
@@ -155,7 +155,7 @@ class ManifestResolverServiceConnotationTest {
     fun `skips connotation signals when sentimentAttribute is unknown`() {
         val entityType = buildEntityType(
             connotationSignals = mapOf(
-                "tier" to "TIER_1",
+                "tier" to "DETERMINISTIC",
                 "sentimentAttribute" to "nonexistent_attribute",
                 "sentimentScale" to linearSentimentScale(),
                 "themeAttributes" to emptyList<String>()
@@ -173,7 +173,7 @@ class ManifestResolverServiceConnotationTest {
     fun `skips connotation signals when themeAttributes contains unknown key`() {
         val entityType = buildEntityType(
             connotationSignals = mapOf(
-                "tier" to "TIER_1",
+                "tier" to "DETERMINISTIC",
                 "sentimentAttribute" to "rating",
                 "sentimentScale" to linearSentimentScale(),
                 "themeAttributes" to listOf("tags", "missing_theme")
@@ -191,7 +191,7 @@ class ManifestResolverServiceConnotationTest {
     fun `skips connotation signals when sourceMin is greater than or equal to sourceMax`() {
         val entityType = buildEntityType(
             connotationSignals = mapOf(
-                "tier" to "TIER_1",
+                "tier" to "DETERMINISTIC",
                 "sentimentAttribute" to "rating",
                 "sentimentScale" to linearSentimentScale(sourceMin = 5.0, sourceMax = 1.0),
                 "themeAttributes" to emptyList<String>()
@@ -209,7 +209,7 @@ class ManifestResolverServiceConnotationTest {
     fun `skips connotation signals when targetMin is greater than or equal to targetMax`() {
         val entityType = buildEntityType(
             connotationSignals = mapOf(
-                "tier" to "TIER_1",
+                "tier" to "DETERMINISTIC",
                 "sentimentAttribute" to "rating",
                 "sentimentScale" to linearSentimentScale(targetMin = 1.0, targetMax = -1.0),
                 "themeAttributes" to emptyList<String>()

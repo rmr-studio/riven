@@ -77,9 +77,9 @@ class EnrichmentWorkflowImplTest {
 
         /**
          * Also protects the Phase B connotation hook: `analyzeSemantics` is the activity
-         * that calls `EnrichmentService.persistConnotationEnvelope` (which routes through
-         * `ConnotationAnalysisService` for the SENTIMENT axis). Removing the call here
-         * would silently disable connotation analysis. Envelope-level assertions live in
+         * that calls `EnrichmentService.persistConnotationSnapshot` (which routes through
+         * `ConnotationAnalysisService` for the SENTIMENT category). Removing the call here
+         * would silently disable connotation analysis. Snapshot-level assertions live in
          * `EnrichmentServiceTest` and `ConnotationPipelineIntegrationTest`.
          */
         @Test

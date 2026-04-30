@@ -30,12 +30,12 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import riven.core.entity.connotation.EntityConnotationEntity
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.enums.workflow.ExecutionJobType
 import riven.core.enums.workflow.ExecutionQueueStatus
-import riven.core.models.connotation.ConnotationAxes
-import riven.core.models.connotation.ConnotationMetadataEnvelope
-import riven.core.models.connotation.ConnotationStatus
-import riven.core.models.connotation.SentimentAxis
+import riven.core.models.connotation.ConnotationMetadata
+import riven.core.models.connotation.ConnotationMetadataSnapshot
+import riven.core.models.connotation.SentimentMetadata
 import riven.core.repository.connotation.EntityConnotationRepository
 import riven.core.service.util.SchemaInitializer
 import java.time.ZonedDateTime
@@ -118,12 +118,12 @@ class ExecutionQueueRepositoryIntegrationTestConfig {
 }
 
 /**
- * Integration test for [ExecutionQueueRepository.enqueueByAxisVersionMismatch].
+ * Integration test for [ExecutionQueueRepository.enqueueByMetadataVersionMismatch].
  *
  * Verifies the JSONB-path version-mismatch enqueue query against a real Postgres
  * (Testcontainers) — H2 does not reliably support `IS DISTINCT FROM` on JSONB paths,
- * which is the operator that lets the query treat null-version envelopes the same as
- * differing-version envelopes.
+ * which is the operator that lets the query treat null-version snapshots the same as
+ * differing-version snapshots.
  *
  * The test uses [SchemaInitializer] to apply the production DDL, including the partial
  * unique index `uq_execution_queue_pending_identity_match` that backs the
@@ -232,11 +232,11 @@ class ExecutionQueueRepositoryIntegrationTest {
         return id
     }
 
-    private fun saveEnvelope(entityId: UUID, sentimentVersion: String?) {
-        val envelope = ConnotationMetadataEnvelope(
-            envelopeVersion = "v1",
-            axes = ConnotationAxes(
-                sentiment = SentimentAxis(
+    private fun saveMetadata(entityId: UUID, sentimentVersion: String?) {
+        val snapshot = ConnotationMetadataSnapshot(
+            snapshotVersion = "v1",
+            metadata = ConnotationMetadata(
+                sentiment = SentimentMetadata(
                     analysisVersion = sentimentVersion,
                     status = ConnotationStatus.NOT_APPLICABLE,
                 ),
@@ -247,7 +247,7 @@ class ExecutionQueueRepositoryIntegrationTest {
             EntityConnotationEntity(
                 entityId = entityId,
                 workspaceId = workspaceId,
-                connotationMetadata = envelope,
+                connotationMetadata = snapshot,
             )
         )
     }
@@ -267,20 +267,20 @@ class ExecutionQueueRepositoryIntegrationTest {
 
     /**
      * Original behaviour: a workspace-wide config bump (e.g. `analysisVersion` "v0" → "v1")
-     * needs every envelope still stamped with the old version to be re-enqueued, while
-     * envelopes already at the new version are skipped.
+     * needs every snapshot still stamped with the old version to be re-enqueued, while
+     * snapshots already at the new version are skipped.
      *
-     * Verifies: only the v0 envelope is enqueued; the v1 envelope is left alone.
+     * Verifies: only the v0 snapshot is enqueued; the v1 snapshot is left alone.
      */
     @Test
-    fun `enqueues entities whose axis version differs`() {
+    fun `enqueues entities whose metadata version differs`() {
         val staleEntityId = insertEntity()
         val freshEntityId = insertEntity()
-        saveEnvelope(staleEntityId, sentimentVersion = "v0")
-        saveEnvelope(freshEntityId, sentimentVersion = "v1")
+        saveMetadata(staleEntityId, sentimentVersion = "v0")
+        saveMetadata(freshEntityId, sentimentVersion = "v1")
 
-        val inserted = executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        val inserted = executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )
@@ -297,12 +297,12 @@ class ExecutionQueueRepositoryIntegrationTest {
      * comparison would yield SQL null and the row would silently be skipped.
      */
     @Test
-    fun `enqueues entities whose axis version is null`() {
+    fun `enqueues entities whose metadata version is null`() {
         val nullVersionEntityId = insertEntity()
-        saveEnvelope(nullVersionEntityId, sentimentVersion = null)
+        saveMetadata(nullVersionEntityId, sentimentVersion = null)
 
-        val inserted = executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        val inserted = executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )
@@ -312,16 +312,16 @@ class ExecutionQueueRepositoryIntegrationTest {
     }
 
     /**
-     * Entities that don't yet have a connotation envelope row are out of scope for this
+     * Entities that don't yet have a connotation snapshot row are out of scope for this
      * helper — they're enqueued via the regular `enqueueEnrichmentByEntityType` path.
      * The INNER JOIN on `entity_connotation` excludes them.
      */
     @Test
-    fun `skips entities with no envelope`() {
-        insertEntity() // no envelope saved
+    fun `skips entities with no snapshot`() {
+        insertEntity() // no snapshot saved
 
-        val inserted = executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        val inserted = executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )
@@ -332,15 +332,15 @@ class ExecutionQueueRepositoryIntegrationTest {
     /**
      * Soft-deleted entities must not be re-enqueued — the join filters on
      * `entities.deleted = false`. Without the filter, a deleted entity with a stale
-     * envelope would generate a queue item that no consumer can process.
+     * snapshot would generate a queue item that no consumer can process.
      */
     @Test
     fun `skips soft-deleted entities`() {
         val deletedEntityId = insertEntity(deleted = true)
-        saveEnvelope(deletedEntityId, sentimentVersion = "v0")
+        saveMetadata(deletedEntityId, sentimentVersion = "v0")
 
-        val inserted = executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        val inserted = executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )
@@ -357,15 +357,15 @@ class ExecutionQueueRepositoryIntegrationTest {
     @Test
     fun `is idempotent on repeat call`() {
         val staleEntityId = insertEntity()
-        saveEnvelope(staleEntityId, sentimentVersion = "v0")
+        saveMetadata(staleEntityId, sentimentVersion = "v0")
 
-        val firstInsert = executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        val firstInsert = executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )
-        val secondInsert = executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        val secondInsert = executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )
@@ -376,12 +376,12 @@ class ExecutionQueueRepositoryIntegrationTest {
     }
 
     /**
-     * The query must be workspace-scoped — envelopes in other workspaces with stale
+     * The query must be workspace-scoped — snapshots in other workspaces with stale
      * versions must NOT be enqueued under [workspaceId]. We seed a second workspace and
-     * a stale envelope in it, then assert nothing is enqueued for our test workspace.
+     * a stale snapshot in it, then assert nothing is enqueued for our test workspace.
      */
     @Test
-    fun `does not enqueue envelopes from other workspaces`() {
+    fun `does not enqueue snapshots from other workspaces`() {
         val otherWorkspaceId = UUID.fromString("c0000000-0000-0000-0000-000000000999")
         val otherEntityTypeId = UUID.fromString("c0000000-0000-0000-0000-000000000998")
         jdbcTemplate.execute(
@@ -415,9 +415,9 @@ class ExecutionQueueRepositoryIntegrationTest {
             otherEntityId, otherWorkspaceId, otherEntityTypeId,
             "queue_repo_other_type", identifierKey,
         )
-        val otherEnvelope = ConnotationMetadataEnvelope(
-            axes = ConnotationAxes(
-                sentiment = SentimentAxis(
+        val snapshot2 = ConnotationMetadataSnapshot(
+            metadata = ConnotationMetadata(
+                sentiment = SentimentMetadata(
                     analysisVersion = "v0",
                     status = ConnotationStatus.NOT_APPLICABLE,
                 ),
@@ -428,12 +428,12 @@ class ExecutionQueueRepositoryIntegrationTest {
             EntityConnotationEntity(
                 entityId = otherEntityId,
                 workspaceId = otherWorkspaceId,
-                connotationMetadata = otherEnvelope,
+                connotationMetadata = snapshot2,
             )
         )
 
-        val inserted = executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        val inserted = executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )
@@ -460,10 +460,10 @@ class ExecutionQueueRepositoryIntegrationTest {
     @Test
     fun `inserted queue rows have ENRICHMENT job type and PENDING status`() {
         val staleEntityId = insertEntity()
-        saveEnvelope(staleEntityId, sentimentVersion = "v0")
+        saveMetadata(staleEntityId, sentimentVersion = "v0")
 
-        executionQueueRepository.enqueueByAxisVersionMismatch(
-            axisName = "SENTIMENT",
+        executionQueueRepository.enqueueByMetadataVersionMismatch(
+            metadataKey = "SENTIMENT",
             currentVersion = "v1",
             workspaceId = workspaceId,
         )

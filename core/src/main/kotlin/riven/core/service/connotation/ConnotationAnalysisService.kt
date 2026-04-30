@@ -1,17 +1,16 @@
 package riven.core.service.connotation
 
 import io.github.oshai.kotlinlogging.KLogger
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.configuration.properties.ConnotationAnalysisConfigurationProperties
 import riven.core.enums.activity.Activity
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.catalog.ConnotationSignals
 import riven.core.models.connotation.AnalysisTier
-import riven.core.models.connotation.ConnotationStatus
 import riven.core.models.connotation.SentimentAnalysisOutcome
-import riven.core.models.connotation.SentimentAxis
+import riven.core.models.connotation.SentimentMetadata
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
@@ -22,12 +21,12 @@ import java.util.UUID
  * Workspace-scoped sentiment analysis dispatcher.
  *
  * Routes a single-entity analysis request to the tier declared in [ConnotationSignals.tier].
- * Tier 1 delegates to [ConnotationTier1Mapper]. Tier 2/3 throw `NotImplementedError` until
- * those tiers are implemented in later phases.
+ * DETERMINISTIC delegates to [DeterministicConnotationMapper]. CLASSIFIER / INFERENCE throw
+ * `NotImplementedError` until those tiers are implemented in later phases.
  *
- * Always returns a [SentimentAxis] — Tier 1 mapping failures are encoded as `status = FAILED`
- * rather than thrown, so the enrichment pipeline can persist the sentinel without aborting
- * RELATIONAL/STRUCTURAL axis writes.
+ * Always returns a [riven.core.models.connotation.SentimentMetadata] — DETERMINISTIC mapping
+ * failures are encoded as `status = FAILED` rather than thrown, so the enrichment pipeline can
+ * persist the sentinel without aborting RELATIONAL/STRUCTURAL metadata writes.
  *
  * Caller is responsible for resolving attribute values from manifest keys to entity-level
  * values before calling. This keeps the service free of repository injections and allows
@@ -35,10 +34,16 @@ import java.util.UUID
  * pass them through cheaply.
  *
  * Activity logging fires on every analyze call regardless of outcome.
+ *
+ * No `@PreAuthorize` — this service runs inside a Temporal activity (via
+ * [riven.core.service.enrichment.EnrichmentService.analyzeSemantics]) where there is no JWT
+ * security context. Workspace ownership is established by the caller before reaching this
+ * dispatcher; activity logging uses [AuthTokenService.getUserIdOrSystem] so the seeded system
+ * user appears as the actor when no JWT is present.
  */
 @Service
 class ConnotationAnalysisService(
-    private val tier1Mapper: ConnotationTier1Mapper,
+    private val deterministicConnotationMapper: DeterministicConnotationMapper,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
     private val properties: ConnotationAnalysisConfigurationProperties,
@@ -46,71 +51,72 @@ class ConnotationAnalysisService(
 ) {
 
     /**
-     * Analyze a single entity's sentiment axis using the manifest-declared tier.
+     * Analyze a single entity's SENTIMENT metadata using the manifest-declared tier.
      *
      * @param entityId Workspace-scoped entity being analyzed.
-     * @param workspaceId Workspace owning the entity (also drives @PreAuthorize).
+     * @param workspaceId Workspace owning the entity (used for activity logging).
      * @param signals Manifest-declared connotation signals (tier + scale + theme keys).
      * @param sourceValue Pre-resolved value for `signals.sentimentAttribute` (caller does the manifest-key -> attribute UUID lookup).
      * @param themeValues Pre-resolved values for `signals.themeAttributes` (manifest key -> string value or null).
-     * @return Populated [SentimentAxis]; status `ANALYZED` on success, `FAILED` on Tier 1 mapping failure.
+     * @return Populated [SentimentMetadata]; status `ANALYZED` on success, `FAILED` on DETERMINISTIC mapping failure.
      */
-    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun analyze(
         entityId: UUID,
         workspaceId: UUID,
         signals: ConnotationSignals,
         sourceValue: Any?,
         themeValues: Map<String, String?>,
-    ): SentimentAxis {
-        val userId = authTokenService.getUserId()
+    ): SentimentMetadata {
+        val userId = authTokenService.getUserIdOrSystem()
 
-        val axis = when (signals.tier) {
-            AnalysisTier.TIER_1 -> runTier1(entityId, workspaceId, signals, sourceValue, themeValues)
-            AnalysisTier.TIER_2, AnalysisTier.TIER_3 ->
+        return when (signals.tier) {
+            AnalysisTier.DETERMINISTIC -> runDeterministicAnalysis(entityId, workspaceId, signals, sourceValue, themeValues)
+            //TODO: Implement CLASSIFIER/INFERENCE mappers and update this when we have real implementations to call
+            AnalysisTier.CLASSIFIER, AnalysisTier.INFERENCE ->
                 throw NotImplementedError("Tier ${signals.tier.name} not implemented in Phase B")
+        }.also {
+            activityService.log(
+                activity = Activity.ENTITY_CONNOTATION,
+                operation = OperationType.ANALYZE,
+                userId = userId,
+                workspaceId = workspaceId,
+                entityType = ApplicationEntityType.ENTITY_CONNOTATION,
+                entityId = entityId,
+                "tier" to signals.tier.name,
+                "status" to it.status.name,
+                "sentiment" to it.sentiment,
+                "analysisVersion" to it.analysisVersion,
+            )
         }
 
-        activityService.log(
-            activity = Activity.ENTITY_CONNOTATION,
-            operation = OperationType.ANALYZE,
-            userId = userId,
-            workspaceId = workspaceId,
-            entityType = ApplicationEntityType.ENTITY_CONNOTATION,
-            entityId = entityId,
-            "tier" to signals.tier.name,
-            "status" to axis.status.name,
-            "sentiment" to axis.sentiment,
-            "analysisVersion" to axis.analysisVersion,
-        )
-        return axis
+
     }
 
-    private fun runTier1(
+    private fun runDeterministicAnalysis(
         entityId: UUID,
         workspaceId: UUID,
         signals: ConnotationSignals,
         sourceValue: Any?,
         themeValues: Map<String, String?>,
-    ): SentimentAxis = when (
-        val outcome = tier1Mapper.analyze(
+    ): SentimentMetadata = when (
+        val outcome = deterministicConnotationMapper.analyze(
             signals = signals,
             sourceValue = sourceValue,
             themeValues = themeValues,
-            activeVersion = properties.tier1CurrentVersion,
+            activeVersion = properties.deterministicCurrentVersion,
         )
     ) {
-        is SentimentAnalysisOutcome.Success -> outcome.axis
+        is SentimentAnalysisOutcome.Success -> outcome.metadata
         is SentimentAnalysisOutcome.Failure -> {
             logger.warn {
-                "Tier 1 connotation analysis failed for entity=$entityId workspace=$workspaceId " +
+                "DETERMINISTIC connotation analysis failed for entity=$entityId workspace=$workspaceId " +
                     "reason=${outcome.reason} message=${outcome.message}"
             }
-            SentimentAxis(
+            SentimentMetadata(
                 status = ConnotationStatus.FAILED,
-                analysisTier = AnalysisTier.TIER_1,
-                analysisVersion = properties.tier1CurrentVersion,
-                analysisModel = "connotation-tier1-${signals.sentimentScale.mappingType.name.lowercase()}-${properties.tier1CurrentVersion}",
+                analysisTier = AnalysisTier.DETERMINISTIC,
+                analysisVersion = properties.deterministicCurrentVersion,
+                analysisModel = "deterministic-connotation-${signals.sentimentScale.mappingType.name.lowercase()}-${properties.deterministicCurrentVersion}",
                 analyzedAt = ZonedDateTime.now(),
             )
         }

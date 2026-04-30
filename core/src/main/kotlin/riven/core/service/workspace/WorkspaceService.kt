@@ -69,8 +69,8 @@ class WorkspaceService(
     }
 
     /**
-     * Whether the workspace has opted into SENTIMENT-axis sentiment analysis during
-     * enrichment. Default false. RELATIONAL and STRUCTURAL axes are unaffected.
+     * Whether the workspace has opted into SENTIMENT-metadata sentiment analysis during
+     * enrichment. Default false. RELATIONAL and STRUCTURAL metadata are unaffected.
      */
     @Throws(NotFoundException::class)
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")

@@ -1,14 +1,14 @@
 package riven.core.models.connotation
 
 /**
- * Outcome of a single Tier 1 sentiment-analysis attempt.
+ * Outcome of a single DETERMINISTIC sentiment-analysis attempt.
  *
- * - [Success] carries a fully populated [SentimentAxis] with status `ANALYZED`.
+ * - [Success] carries a fully populated [SentimentMetadata] with status `ANALYZED`.
  * - [Failure] carries a typed reason for `FAILED` status; the caller is responsible
- *   for logging/metrics and constructing a sentinel `SentimentAxis(status = FAILED, ...)`.
+ *   for logging/metrics and constructing a sentinel `SentimentMetadata(status = FAILED, ...)`.
  */
 sealed class SentimentAnalysisOutcome {
-    data class Success(val axis: SentimentAxis) : SentimentAnalysisOutcome()
+    data class Success(val metadata: SentimentMetadata) : SentimentAnalysisOutcome()
 
     data class Failure(val reason: SentimentFailureReason, val message: String) :
         SentimentAnalysisOutcome()

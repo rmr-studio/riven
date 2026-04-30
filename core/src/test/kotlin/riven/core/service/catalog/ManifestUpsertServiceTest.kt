@@ -9,16 +9,12 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.mockito.kotlin.*
 import riven.core.entity.catalog.*
 import riven.core.enums.catalog.ManifestType
-import riven.core.enums.common.icon.IconColour
-import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.EntityRelationshipCardinality
-import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.catalog.*
 import riven.core.models.connotation.AnalysisTier
 import riven.core.repository.catalog.*
 import java.security.MessageDigest
-import java.time.ZonedDateTime
 import java.util.*
 
 class ManifestUpsertServiceTest {
@@ -277,7 +273,7 @@ class ManifestUpsertServiceTest {
     @Test
     fun `upsertManifest persists connotationSignals when ResolvedEntityType has them`() {
         val signals = ConnotationSignals(
-            tier = AnalysisTier.TIER_1,
+            tier = AnalysisTier.DETERMINISTIC,
             sentimentAttribute = "rating",
             sentimentScale = SentimentScale(
                 sourceMin = 1.0,

@@ -4,6 +4,7 @@ import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.enums.common.validation.SchemaType
+import riven.core.models.connotation.SentimentMetadata
 import java.util.*
 
 /**
@@ -11,14 +12,14 @@ import java.util.*
  * [riven.core.service.enrichment.EnrichmentService.analyzeSemantics] and consumed by
  * [riven.core.service.enrichment.SemanticTextBuilderService] and downstream activities.
  *
- * Combines the persisted polymorphic envelope axes (RELATIONAL summaries / cluster /
+ * Combines the persisted polymorphic snapshot metadata (RELATIONAL summaries / cluster /
  * STRUCTURAL type metadata, also written to `entity_connotation`) with live entity payload
  * values (FREETEXT, CATEGORICAL, TEMPORAL attribute values) read fresh from `entities` each
  * enrichment cycle. Conceptually:
- * - Section 1 (Type) / Section 2 (Identity) / Section 6 (Relationship Definitions) → STRUCTURAL axis.
- * - Section 4 (Relationship Summaries) / Section 5 (Cluster) → RELATIONAL axis.
- * - Section 3 (Attributes) — semantic labels + classifications come from the STRUCTURAL axis;
- *   attribute *values* are live from `entities.payload`, NOT from the envelope.
+ * - Section 1 (Type) / Section 2 (Identity) / Section 6 (Relationship Definitions) → STRUCTURAL metadata.
+ * - Section 4 (Relationship Summaries) / Section 5 (Cluster) → RELATIONAL metadata.
+ * - Section 3 (Attributes) — semantic labels + classifications come from the STRUCTURAL metadata;
+ *   attribute *values* are live from `entities.payload`, NOT from the snapshot.
  *
  * All fields use Temporal-serializable types (no Any?, no JsonNode, no raw object types).
  * Attribute values are pre-converted to String? before context creation.
@@ -55,13 +56,13 @@ data class EnrichmentContext(
     /** Semantic definitions for each relationship type — used in Section 6 of enriched text. */
     val relationshipDefinitions: List<EnrichmentRelationshipDefinitionContext> = emptyList(),
     /**
-     * Snapshot of the SENTIMENT axis written for this enrichment cycle. Null when
+     * Snapshot of the SENTIMENT metadata written for this enrichment cycle. Null when
      * the workspace has not opted in or the entity type has no manifest connotation
-     * signals (envelope axis remains at NOT_APPLICABLE in that case). Forwarded only
-     * when the analyzed status is ANALYZED — FAILED/NOT_APPLICABLE axes are not
+     * signals (snapshot SENTIMENT remains at NOT_APPLICABLE in that case). Forwarded only
+     * when the analyzed status is ANALYZED — FAILED/NOT_APPLICABLE outcomes are not
      * surfaced to the text builder.
      */
-    val sentiment: riven.core.models.connotation.SentimentAxis? = null,
+    val sentiment: SentimentMetadata? = null,
 )
 
 /**

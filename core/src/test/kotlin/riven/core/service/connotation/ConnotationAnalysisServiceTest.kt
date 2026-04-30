@@ -22,6 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.configuration.properties.ConnotationAnalysisConfigurationProperties
 import riven.core.enums.activity.Activity
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.enums.workspace.WorkspaceRoles
@@ -30,7 +31,6 @@ import riven.core.models.catalog.ScaleMappingType
 import riven.core.models.catalog.SentimentScale
 import riven.core.models.common.json.JsonObject
 import riven.core.models.connotation.AnalysisTier
-import riven.core.models.connotation.ConnotationStatus
 import riven.core.models.connotation.SentimentLabel
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
@@ -43,7 +43,7 @@ import java.util.UUID
         AuthTokenService::class,
         WorkspaceSecurity::class,
         ConnotationAnalysisService::class,
-        ConnotationTier1Mapper::class,
+        DeterministicConnotationMapper::class,
         ConnotationAnalysisServiceTest.TestConfig::class,
     ]
 )
@@ -64,7 +64,7 @@ class ConnotationAnalysisServiceTest {
     class TestConfig {
         @Bean
         fun connotationAnalysisConfigurationProperties() = ConnotationAnalysisConfigurationProperties(
-            tier1CurrentVersion = "v1",
+            deterministicCurrentVersion = "v1",
         )
     }
 
@@ -81,7 +81,7 @@ class ConnotationAnalysisServiceTest {
     private lateinit var service: ConnotationAnalysisService
 
     private fun signals(
-        tier: AnalysisTier = AnalysisTier.TIER_1,
+        tier: AnalysisTier = AnalysisTier.DETERMINISTIC,
         attribute: String = "satisfaction_score",
         sourceMin: Double = 1.0,
         sourceMax: Double = 5.0,
@@ -97,7 +97,7 @@ class ConnotationAnalysisServiceTest {
     )
 
     @Test
-    fun `Tier 1 success populates sentiment axis with ANALYZED status and logs activity`() {
+    fun `DETERMINISTIC success populates sentiment metadata with ANALYZED status and logs activity`() {
         val entityId = UUID.randomUUID()
         whenever(
             activityService.logActivity(
@@ -105,7 +105,7 @@ class ConnotationAnalysisServiceTest {
             )
         ).thenReturn(mock())
 
-        val axis = service.analyze(
+        val metadata = service.analyze(
             entityId = entityId,
             workspaceId = workspaceId,
             signals = signals(themes = listOf("tags")),
@@ -113,14 +113,14 @@ class ConnotationAnalysisServiceTest {
             themeValues = mapOf("tags" to "billing"),
         )
 
-        assertEquals(1.0, axis.sentiment!!, 1e-9)
-        assertEquals(SentimentLabel.VERY_POSITIVE, axis.sentimentLabel)
-        assertEquals(ConnotationStatus.ANALYZED, axis.status)
-        assertEquals(AnalysisTier.TIER_1, axis.analysisTier)
-        assertEquals("v1", axis.analysisVersion)
-        assertEquals("connotation-tier1-linear-v1", axis.analysisModel)
-        assertNotNull(axis.analyzedAt)
-        assertEquals(listOf("billing"), axis.themes)
+        assertEquals(1.0, metadata.sentiment!!, 1e-9)
+        assertEquals(SentimentLabel.VERY_POSITIVE, metadata.sentimentLabel)
+        assertEquals(ConnotationStatus.ANALYZED, metadata.status)
+        assertEquals(AnalysisTier.DETERMINISTIC, metadata.analysisTier)
+        assertEquals("v1", metadata.analysisVersion)
+        assertEquals("deterministic-connotation-linear-v1", metadata.analysisModel)
+        assertNotNull(metadata.analyzedAt)
+        assertEquals(listOf("billing"), metadata.themes)
 
         val detailsCaptor = argumentCaptor<JsonObject>()
         verify(activityService).logActivity(
@@ -134,14 +134,14 @@ class ConnotationAnalysisServiceTest {
             detailsCaptor.capture(),
         )
         val details = detailsCaptor.firstValue
-        assertEquals("TIER_1", details["tier"])
+        assertEquals("DETERMINISTIC", details["tier"])
         assertEquals("ANALYZED", details["status"])
         assertEquals(1.0, details["sentiment"])
         assertEquals("v1", details["analysisVersion"])
     }
 
     @Test
-    fun `Tier 1 missing source value returns FAILED axis and still logs activity`() {
+    fun `DETERMINISTIC missing source value returns FAILED metadata and still logs activity`() {
         val entityId = UUID.randomUUID()
         whenever(
             activityService.logActivity(
@@ -149,7 +149,7 @@ class ConnotationAnalysisServiceTest {
             )
         ).thenReturn(mock())
 
-        val axis = service.analyze(
+        val metadata = service.analyze(
             entityId = entityId,
             workspaceId = workspaceId,
             signals = signals(),
@@ -157,14 +157,14 @@ class ConnotationAnalysisServiceTest {
             themeValues = emptyMap(),
         )
 
-        assertEquals(ConnotationStatus.FAILED, axis.status)
-        assertNull(axis.sentiment)
-        assertNull(axis.sentimentLabel)
-        assertEquals(AnalysisTier.TIER_1, axis.analysisTier)
-        assertEquals("v1", axis.analysisVersion)
-        assertEquals("connotation-tier1-linear-v1", axis.analysisModel)
-        assertNotNull(axis.analyzedAt)
-        assertTrue(axis.themes.isEmpty())
+        assertEquals(ConnotationStatus.FAILED, metadata.status)
+        assertNull(metadata.sentiment)
+        assertNull(metadata.sentimentLabel)
+        assertEquals(AnalysisTier.DETERMINISTIC, metadata.analysisTier)
+        assertEquals("v1", metadata.analysisVersion)
+        assertEquals("deterministic-connotation-linear-v1", metadata.analysisModel)
+        assertNotNull(metadata.analyzedAt)
+        assertTrue(metadata.themes.isEmpty())
 
         val detailsCaptor = argumentCaptor<JsonObject>()
         verify(activityService).logActivity(
@@ -178,13 +178,13 @@ class ConnotationAnalysisServiceTest {
             detailsCaptor.capture(),
         )
         val details = detailsCaptor.firstValue
-        assertEquals("TIER_1", details["tier"])
+        assertEquals("DETERMINISTIC", details["tier"])
         assertEquals("FAILED", details["status"])
         assertNull(details["sentiment"])
     }
 
     @Test
-    fun `Tier 1 non-numeric source value returns FAILED axis`() {
+    fun `DETERMINISTIC non-numeric source value returns FAILED metadata`() {
         val entityId = UUID.randomUUID()
         whenever(
             activityService.logActivity(
@@ -192,7 +192,7 @@ class ConnotationAnalysisServiceTest {
             )
         ).thenReturn(mock())
 
-        val axis = service.analyze(
+        val metadata = service.analyze(
             entityId = entityId,
             workspaceId = workspaceId,
             signals = signals(),
@@ -200,9 +200,9 @@ class ConnotationAnalysisServiceTest {
             themeValues = emptyMap(),
         )
 
-        assertEquals(ConnotationStatus.FAILED, axis.status)
-        assertNull(axis.sentiment)
-        assertEquals(AnalysisTier.TIER_1, axis.analysisTier)
+        assertEquals(ConnotationStatus.FAILED, metadata.status)
+        assertNull(metadata.sentiment)
+        assertEquals(AnalysisTier.DETERMINISTIC, metadata.analysisTier)
 
         verify(activityService).logActivity(
             eq(Activity.ENTITY_CONNOTATION),
@@ -217,12 +217,12 @@ class ConnotationAnalysisServiceTest {
     }
 
     @Test
-    fun `Tier 2 throws NotImplementedError`() {
+    fun `CLASSIFIER throws NotImplementedError`() {
         assertThrows<NotImplementedError> {
             service.analyze(
                 entityId = UUID.randomUUID(),
                 workspaceId = workspaceId,
-                signals = signals(tier = AnalysisTier.TIER_2),
+                signals = signals(tier = AnalysisTier.CLASSIFIER),
                 sourceValue = 4.0,
                 themeValues = emptyMap(),
             )
@@ -230,12 +230,12 @@ class ConnotationAnalysisServiceTest {
     }
 
     @Test
-    fun `Tier 3 throws NotImplementedError`() {
+    fun `INFERENCE throws NotImplementedError`() {
         assertThrows<NotImplementedError> {
             service.analyze(
                 entityId = UUID.randomUUID(),
                 workspaceId = workspaceId,
-                signals = signals(tier = AnalysisTier.TIER_3),
+                signals = signals(tier = AnalysisTier.INFERENCE),
                 sourceValue = 4.0,
                 themeValues = emptyMap(),
             )

@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
-import riven.core.entity.connotation.EntityConnotationEntity
 import riven.core.entity.enrichment.EntityEmbeddingEntity
 import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.entity.entity.EntityEntity
@@ -26,8 +25,8 @@ import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
-import riven.core.models.connotation.AxisStalenessModel
-import riven.core.models.connotation.ConnotationStatus
+import riven.core.models.connotation.MetadataStalenessModel
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.enums.integration.SourceType
 import riven.core.exceptions.NotFoundException
 import riven.core.models.common.validation.Schema
@@ -46,7 +45,6 @@ import riven.core.models.catalog.ConnotationSignals
 import riven.core.models.catalog.ScaleMappingType
 import riven.core.models.catalog.SentimentScale
 import riven.core.models.connotation.AnalysisTier
-import riven.core.models.connotation.SentimentAxis
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.catalog.ManifestCatalogService
 import riven.core.service.connotation.ConnotationAnalysisService
@@ -62,6 +60,8 @@ import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.service.util.factory.identity.IdentityFactory
 import riven.core.service.util.factory.workflow.ExecutionQueueFactory
 import org.junit.jupiter.api.BeforeEach
+import riven.core.entity.connotation.EntityConnotationEntity
+import riven.core.models.connotation.SentimentMetadata
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -71,6 +71,7 @@ import java.util.*
         WorkspaceSecurity::class,
         SecurityTestConfig::class,
         EnrichmentService::class,
+        riven.core.configuration.util.ObjectMapperConfig::class,
     ]
 )
 class EnrichmentServiceTest : BaseServiceTest() {
@@ -129,12 +130,36 @@ class EnrichmentServiceTest : BaseServiceTest() {
     @Autowired
     private lateinit var enrichmentService: EnrichmentService
 
+    @Autowired
+    private lateinit var objectMapper: tools.jackson.databind.ObjectMapper
+
     @BeforeEach
     fun setUp() {
         whenever(enrichmentProperties.vectorDimensions).thenReturn(1536)
-        // Default: SENTIMENT axis remains NOT_APPLICABLE for tests that don't care about
+        // Default: SENTIMENT remains NOT_APPLICABLE for tests that don't care about
         // connotation. Individual tests override `isConnotationEnabled` / signals as needed.
         whenever(workspaceService.isConnotationEnabled(any())).thenReturn(false)
+    }
+
+    /**
+     * Capture the JSON snapshot passed to upsertByEntityId and deserialize it.
+     * Verifies the call's entity/workspace identifiers match expectations.
+     */
+    private fun captureUpsertedSnapshot(
+        entityId: UUID,
+        workspaceId: UUID,
+    ): riven.core.models.connotation.ConnotationMetadataSnapshot {
+        val jsonCaptor = argumentCaptor<String>()
+        verify(entityConnotationRepository).upsertByEntityId(
+            eq(entityId),
+            eq(workspaceId),
+            jsonCaptor.capture(),
+            any(),
+        )
+        return objectMapper.readValue(
+            jsonCaptor.firstValue,
+            riven.core.models.connotation.ConnotationMetadataSnapshot::class.java,
+        )
     }
 
     // ------------------------------------------------------------------
@@ -938,15 +963,15 @@ class EnrichmentServiceTest : BaseServiceTest() {
     }
 
     // ------------------------------------------------------------------
-    // analyzeSemantics: connotation envelope persistence (Phase A)
+    // analyzeSemantics: connotation snapshot persistence (Phase A)
     // ------------------------------------------------------------------
 
     /**
-     * Phase A: every analyzeSemantics call upserts a connotation envelope into entity_connotation.
-     * delete-then-insert mirrors the embedding upsert pattern.
+     * Phase A: every analyzeSemantics call upserts a connotation snapshot into entity_connotation.
+     * Persistence is a single atomic INSERT ... ON CONFLICT DO UPDATE keyed by entity_id.
      */
     @Test
-    fun `analyzeSemantics persists connotation envelope on every run`() {
+    fun `analyzeSemantics persists connotation snapshot on every run`() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
@@ -965,21 +990,17 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.analyzeSemantics(queueItemId)
 
-        verify(entityConnotationRepository).deleteByEntityId(entityId)
-        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
-        verify(entityConnotationRepository).save(captor.capture())
-        val saved = captor.value
-        assertEquals(entityId, saved.entityId)
-        assertEquals(workspaceId, saved.workspaceId)
-        assertEquals("v1", saved.connotationMetadata.envelopeVersion)
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        assertEquals("v1", snapshot.snapshotVersion)
+        verify(entityConnotationRepository, never()).save(any())
     }
 
     /**
-     * Phase A: SENTIMENT axis is a placeholder (NOT_APPLICABLE) until Phase B activates the
-     * Tier 1 mapper. RELATIONAL + STRUCTURAL axes are populated deterministically.
+     * Phase A: SENTIMENT metadata is a placeholder (NOT_APPLICABLE) until Phase B activates the
+     * DETERMINISTIC mapper. RELATIONAL + STRUCTURAL metadata are populated deterministically.
      */
     @Test
-    fun `analyzeSemantics envelope has placeholder SENTIMENT and populated RELATIONAL+STRUCTURAL axes`() {
+    fun `analyzeSemantics snapshot has placeholder SENTIMENT and populated RELATIONAL+STRUCTURAL metadata`() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
@@ -998,33 +1019,31 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.analyzeSemantics(queueItemId)
 
-        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
-        verify(entityConnotationRepository).save(captor.capture())
-        val envelope = captor.value.connotationMetadata
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
 
-        val sentiment = requireNotNull(envelope.axes.sentiment)
+        val sentiment = requireNotNull(snapshot.metadata.sentiment)
         assertEquals(ConnotationStatus.NOT_APPLICABLE, sentiment.status)
         assertNull(sentiment.sentiment)
         assertNull(sentiment.sentimentLabel)
-        assertEquals(AxisStalenessModel.ON_SOURCE_TEXT_CHANGE, sentiment.stalenessModel)
+        assertEquals(MetadataStalenessModel.ON_SOURCE_TEXT_CHANGE, sentiment.stalenessModel)
 
-        val relational = requireNotNull(envelope.axes.relational)
-        assertEquals(AxisStalenessModel.ON_NEIGHBOR_CHANGE, relational.stalenessModel)
+        val relational = requireNotNull(snapshot.metadata.relational)
+        assertEquals(MetadataStalenessModel.ON_NEIGHBOR_CHANGE, relational.stalenessModel)
         assertNotNull(relational.snapshotAt)
 
-        val structural = requireNotNull(envelope.axes.structural)
+        val structural = requireNotNull(snapshot.metadata.structural)
         assertEquals("Customer", structural.entityTypeName)
-        assertEquals(SemanticGroup.UNCATEGORIZED.name, structural.semanticGroup)
-        assertEquals(LifecycleDomain.UNCATEGORIZED.name, structural.lifecycleDomain)
-        assertEquals(AxisStalenessModel.ON_TYPE_METADATA_CHANGE, structural.stalenessModel)
+        assertEquals(SemanticGroup.UNCATEGORIZED, structural.semanticGroup)
+        assertEquals(LifecycleDomain.UNCATEGORIZED, structural.lifecycleDomain)
+        assertEquals(MetadataStalenessModel.ON_TYPE_METADATA_CHANGE, structural.stalenessModel)
     }
 
     /**
-     * STRUCTURAL axis snapshots schema version + attribute classifications + relationship
+     * STRUCTURAL metadata snapshots schema version + attribute classifications + relationship
      * semantic definitions captured at embed time. Used by manifest reconciliation to detect drift.
      */
     @Test
-    fun `analyzeSemantics STRUCTURAL axis snapshots schema version and attribute classifications`() {
+    fun `analyzeSemantics STRUCTURAL metadata snapshots schema version and attribute classifications`() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
@@ -1052,29 +1071,28 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.analyzeSemantics(queueItemId)
 
-        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
-        verify(entityConnotationRepository).save(captor.capture())
-        val structural = requireNotNull(captor.value.connotationMetadata.axes.structural)
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        val structural = requireNotNull(snapshot.metadata.structural)
         assertEquals(7, structural.schemaVersion)
         assertEquals(1, structural.attributeClassifications.size)
         val attrSnapshot = structural.attributeClassifications[0]
         assertEquals(attrId.toString(), attrSnapshot.attributeId)
         assertEquals("Email", attrSnapshot.semanticLabel)
-        assertEquals("IDENTIFIER", attrSnapshot.classification)
-        assertEquals("TEXT", attrSnapshot.schemaType)
+        assertEquals(SemanticAttributeClassification.IDENTIFIER, attrSnapshot.classification)
+        assertEquals(SchemaType.TEXT, attrSnapshot.schemaType)
     }
 
     // ------------------------------------------------------------------
-    // analyzeSemantics: SENTIMENT axis wiring (Phase B Task 12)
+    // analyzeSemantics: SENTIMENT wiring (Phase B Task 12)
     // ------------------------------------------------------------------
 
     /**
      * When the workspace flag is enabled and the entity type has manifest connotation signals,
-     * the SENTIMENT axis is delegated to ConnotationAnalysisService and its result persisted
-     * verbatim (ANALYZED in this case) onto the connotation envelope.
+     * the SENTIMENT metadata is delegated to ConnotationAnalysisService and its result persisted
+     * verbatim (ANALYZED in this case) onto the connotation snapshot.
      */
     @Test
-    fun `persistConnotationEnvelope populates SENTIMENT axis when workspace flag is on and signals exist`() {
+    fun `persistConnotationSnapshot populates SENTIMENT when workspace flag is on and signals exist`() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
@@ -1092,7 +1110,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
 
         val signals = ConnotationSignals(
-            tier = AnalysisTier.TIER_1,
+            tier = AnalysisTier.DETERMINISTIC,
             sentimentAttribute = "rating",
             sentimentScale = SentimentScale(
                 sourceMin = 1.0,
@@ -1103,10 +1121,10 @@ class EnrichmentServiceTest : BaseServiceTest() {
             ),
             themeAttributes = emptyList(),
         )
-        val analyzedAxis = SentimentAxis(
+        val analysedMetadata = SentimentMetadata(
             sentiment = 0.75,
             analysisVersion = "tier1-v1",
-            analysisTier = AnalysisTier.TIER_1,
+            analysisTier = AnalysisTier.DETERMINISTIC,
             status = ConnotationStatus.ANALYZED,
             analyzedAt = ZonedDateTime.now(),
         )
@@ -1120,24 +1138,23 @@ class EnrichmentServiceTest : BaseServiceTest() {
                 anyOrNull(),
                 any(),
             )
-        ).thenReturn(analyzedAxis)
+        ).thenReturn(analysedMetadata)
 
         enrichmentService.analyzeSemantics(queueItemId)
 
-        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
-        verify(entityConnotationRepository).save(captor.capture())
-        val sentiment = requireNotNull(captor.value.connotationMetadata.axes.sentiment)
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        val sentiment = requireNotNull(snapshot.metadata.sentiment)
         assertEquals(ConnotationStatus.ANALYZED, sentiment.status)
         assertEquals(0.75, sentiment.sentiment)
-        assertEquals(AnalysisTier.TIER_1, sentiment.analysisTier)
+        assertEquals(AnalysisTier.DETERMINISTIC, sentiment.analysisTier)
     }
 
     /**
-     * When the workspace flag is off, the SENTIMENT axis must remain NOT_APPLICABLE
+     * When the workspace flag is off, the SENTIMENT metadata must remain NOT_APPLICABLE
      * and ConnotationAnalysisService must NOT be invoked at all.
      */
     @Test
-    fun `persistConnotationEnvelope leaves SENTIMENT axis at NOT_APPLICABLE when workspace flag is off`() {
+    fun `persistConnotationSnapshot leaves SENTIMENT at NOT_APPLICABLE when workspace flag is off`() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
@@ -1157,9 +1174,8 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.analyzeSemantics(queueItemId)
 
-        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
-        verify(entityConnotationRepository).save(captor.capture())
-        val sentiment = requireNotNull(captor.value.connotationMetadata.axes.sentiment)
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        val sentiment = requireNotNull(snapshot.metadata.sentiment)
         assertEquals(ConnotationStatus.NOT_APPLICABLE, sentiment.status)
 
         verify(connotationAnalysisService, never()).analyze(any(), any(), any(), anyOrNull(), any())
@@ -1167,11 +1183,11 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
     /**
      * Workspace flag is on but the manifest doesn't declare connotation signals for this
-     * entity type (e.g. a custom user-defined type). The SENTIMENT axis must remain
+     * entity type (e.g. a custom user-defined type). The SENTIMENT metadata must remain
      * NOT_APPLICABLE, and ConnotationAnalysisService must not be invoked.
      */
     @Test
-    fun `persistConnotationEnvelope leaves SENTIMENT axis at NOT_APPLICABLE when manifest has no signals`() {
+    fun `persistConnotationSnapshot leaves SENTIMENT at NOT_APPLICABLE when manifest has no signals`() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
@@ -1192,20 +1208,19 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.analyzeSemantics(queueItemId)
 
-        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
-        verify(entityConnotationRepository).save(captor.capture())
-        val sentiment = requireNotNull(captor.value.connotationMetadata.axes.sentiment)
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        val sentiment = requireNotNull(snapshot.metadata.sentiment)
         assertEquals(ConnotationStatus.NOT_APPLICABLE, sentiment.status)
 
         verify(connotationAnalysisService, never()).analyze(any(), any(), any(), anyOrNull(), any())
     }
 
     /**
-     * When SENTIMENT is gated off, RELATIONAL and STRUCTURAL axes must still be populated
-     * — gating the sentiment computation must not regress the deterministic axes.
+     * When SENTIMENT is gated off, RELATIONAL and STRUCTURAL must still be populated
+     * — gating the sentiment computation must not regress the deterministic categories.
      */
     @Test
-    fun `persistConnotationEnvelope still writes RELATIONAL and STRUCTURAL axes when SENTIMENT is gated off`() {
+    fun `persistConnotationSnapshot still writes RELATIONAL and STRUCTURAL when SENTIMENT is gated off`() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
@@ -1225,11 +1240,9 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.analyzeSemantics(queueItemId)
 
-        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
-        verify(entityConnotationRepository).save(captor.capture())
-        val envelope = captor.value.connotationMetadata
-        assertNotNull(envelope.axes.relational)
-        assertNotNull(envelope.axes.structural)
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        assertNotNull(snapshot.metadata.relational)
+        assertNotNull(snapshot.metadata.structural)
     }
 
     // ------------------------------------------------------------------
@@ -1238,7 +1251,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
     /**
      * enqueueByEntityType delegates to the batched ExecutionQueueRepository INSERT...SELECT and
-     * returns the inserted-row count. Used by SchemaReconciliationService to invalidate envelopes
+     * returns the inserted-row count. Used by SchemaReconciliationService to invalidate snapshots
      * after a manifest-driven schema change.
      */
     @Test

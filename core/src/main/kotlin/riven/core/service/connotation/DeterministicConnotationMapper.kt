@@ -1,19 +1,20 @@
 package riven.core.service.connotation
 
 import org.springframework.stereotype.Service
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.models.catalog.ConnotationSignals
 import riven.core.models.catalog.ScaleMappingType
 import riven.core.models.catalog.SentimentScale
+import riven.core.models.common.json.JsonValue
 import riven.core.models.connotation.AnalysisTier
-import riven.core.models.connotation.ConnotationStatus
 import riven.core.models.connotation.SentimentAnalysisOutcome
-import riven.core.models.connotation.SentimentAxis
 import riven.core.models.connotation.SentimentFailureReason
 import riven.core.models.connotation.SentimentLabel
+import riven.core.models.connotation.SentimentMetadata
 import java.time.ZonedDateTime
 
 /**
- * Pure deterministic Tier 1 sentiment mapper.
+ * Pure DETERMINISTIC-tier sentiment mapper.
  *
  * Reads a single source attribute value and applies the manifest's [ConnotationSignals]
  * scale (LINEAR or THRESHOLD) to produce a unified `[-1.0, +1.0]` sentiment score and
@@ -24,12 +25,12 @@ import java.time.ZonedDateTime
  * should not depend on the exact timestamp.
  */
 @Service
-class ConnotationTier1Mapper {
+class DeterministicConnotationMapper: AbstractConnotationMapper{
 
-    fun analyze(
+    override fun analyze(
         signals: ConnotationSignals,
-        sourceValue: Any?,
-        themeValues: Map<String, String?>,
+        sourceValue: JsonValue,
+        themeValues: Map<String, JsonValue>,
         activeVersion: String,
     ): SentimentAnalysisOutcome {
         if (sourceValue == null) {
@@ -50,17 +51,17 @@ class ConnotationTier1Mapper {
 
         val themes = signals.themeAttributes.mapNotNull { themeValues[it] }
 
-        val axis = SentimentAxis(
+        val metadata = SentimentMetadata(
             sentiment = score,
             sentimentLabel = labelFor(score),
-            themes = themes,
+            themes = themes.map { it.toString() },
             analysisVersion = activeVersion,
             analysisModel = modelIdentifier(signals.sentimentScale.mappingType, activeVersion),
-            analysisTier = AnalysisTier.TIER_1,
+            analysisTier = AnalysisTier.DETERMINISTIC,
             status = ConnotationStatus.ANALYZED,
             analyzedAt = ZonedDateTime.now(),
         )
-        return SentimentAnalysisOutcome.Success(axis)
+        return SentimentAnalysisOutcome.Success(metadata)
     }
 
     private fun coerceToDouble(value: Any): Double? = when (value) {
@@ -89,5 +90,5 @@ class ConnotationTier1Mapper {
     }
 
     private fun modelIdentifier(mappingType: ScaleMappingType, version: String): String =
-        "connotation-tier1-${mappingType.name.lowercase()}-$version"
+        "deterministic-connotation-${mappingType.name.lowercase()}-$version"
 }

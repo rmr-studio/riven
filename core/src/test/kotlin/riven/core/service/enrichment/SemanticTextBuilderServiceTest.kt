@@ -7,15 +7,14 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.enums.integration.SourceType
 import riven.core.models.connotation.AnalysisTier
-import riven.core.models.connotation.ConnotationStatus
-import riven.core.models.connotation.SentimentAxis
 import riven.core.models.connotation.SentimentLabel
-import riven.core.models.enrichment.EnrichedTextResult
+import riven.core.models.connotation.SentimentMetadata
 import riven.core.service.util.factory.enrichment.EnrichmentFactory
 import java.util.UUID
 import kotlin.test.assertContains
@@ -726,12 +725,12 @@ class SemanticTextBuilderServiceTest {
     inner class ConnotationContextSection {
 
         @Test
-        fun `Connotation Context section emits when SENTIMENT axis is ANALYZED`() {
-            val sentiment = SentimentAxis(
+        fun `Connotation Context section emits when SENTIMENT is ANALYZED`() {
+            val sentiment = SentimentMetadata(
                 sentiment = 0.8,
                 sentimentLabel = SentimentLabel.VERY_POSITIVE,
                 themes = listOf("billing", "fast resolution"),
-                analysisTier = AnalysisTier.TIER_1,
+                analysisTier = AnalysisTier.DETERMINISTIC,
                 status = ConnotationStatus.ANALYZED,
             )
             val context = EnrichmentFactory.enrichmentContext(sentiment = sentiment)
@@ -760,11 +759,11 @@ class SemanticTextBuilderServiceTest {
         @Test
         fun `Connotation Context section is bounded under 300 chars`() {
             val longThemes = (1..50).map { "very-long-theme-name-with-many-characters-$it" }
-            val sentiment = SentimentAxis(
+            val sentiment = SentimentMetadata(
                 sentiment = 0.5,
                 sentimentLabel = SentimentLabel.POSITIVE,
                 themes = longThemes,
-                analysisTier = AnalysisTier.TIER_1,
+                analysisTier = AnalysisTier.DETERMINISTIC,
                 status = ConnotationStatus.ANALYZED,
             )
             val context = EnrichmentFactory.enrichmentContext(sentiment = sentiment)

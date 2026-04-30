@@ -6,7 +6,7 @@ import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.enums.integration.SourceType
-import riven.core.models.connotation.SentimentAxis
+import riven.core.models.connotation.SentimentMetadata
 import riven.core.models.enrichment.EnrichedTextResult
 import riven.core.models.enrichment.EnrichmentAttributeContext
 import riven.core.models.enrichment.EnrichmentClusterMemberContext
@@ -48,7 +48,7 @@ object EnrichmentFactory {
         clusterMembers: List<EnrichmentClusterMemberContext> = emptyList(),
         referencedEntityIdentifiers: Map<UUID, String> = emptyMap(),
         relationshipDefinitions: List<EnrichmentRelationshipDefinitionContext> = emptyList(),
-        sentiment: SentimentAxis? = null,
+        sentiment: SentimentMetadata? = null,
     ): EnrichmentContext = EnrichmentContext(
         queueItemId = queueItemId,
         entityId = entityId,

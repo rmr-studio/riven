@@ -75,8 +75,7 @@ riven:
   query:
     timeout-seconds: 10
   connotation:
-    tier1-current-version: v1
-    tier2-current-version: v1
+    deterministic-current-version: v1
 storage:
   provider: local
   local:

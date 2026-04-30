@@ -1,5 +1,6 @@
 package riven.core.service.connotation
 
+import ch.qos.logback.classic.spi.Configurator
 import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.client.WorkflowClient
 import org.assertj.core.api.Assertions.assertThat
@@ -38,6 +39,7 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticGroup
@@ -49,7 +51,6 @@ import riven.core.models.catalog.ScaleMappingType
 import riven.core.models.catalog.SentimentScale
 import riven.core.models.common.validation.Schema
 import riven.core.models.connotation.AnalysisTier
-import riven.core.models.connotation.ConnotationStatus
 import riven.core.models.connotation.SentimentLabel
 import riven.core.repository.catalog.CatalogEntityTypeRepository
 import riven.core.repository.catalog.ManifestCatalogRepository
@@ -66,6 +67,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.TemporalAccessor
 import java.util.Optional
 import java.util.UUID
+import kotlin.test.assertNotNull
 
 /**
  * Singleton Postgres container shared by the connotation pipeline integration test.
@@ -87,10 +89,10 @@ private object ConnotationPipelineTestContainer {
 }
 
 /**
- * Spring configuration for the Tier 1 connotation pipeline integration test.
+ * Spring configuration for the DETERMINISTIC connotation pipeline integration test.
  *
  * Loads the real [EnrichmentService] -> [riven.core.service.connotation.ConnotationAnalysisService] ->
- * [riven.core.service.connotation.ConnotationTier1Mapper] chain, the real [riven.core.service.catalog.ManifestCatalogService],
+ * [riven.core.service.connotation.DeterministicConnotationMapper] chain, the real [riven.core.service.catalog.ManifestCatalogService],
  * the real [riven.core.service.entity.EntityAttributeService], and all repositories. Mocks are limited to:
  *
  * - [WorkflowClient] / Temporal — `analyzeSemantics` does not dispatch a workflow.
@@ -98,8 +100,7 @@ private object ConnotationPipelineTestContainer {
  *   is short-circuited because Spring Security is excluded from the auto-config and `@PreAuthorize`
  *   decoration is not active without it.
  * - [riven.core.service.activity.ActivityService] — the Activity insert path uses a CHECK constraint
- *   on `operation` that does not yet include `ANALYZE`; mocking keeps the test focused on the
- *   envelope-write path rather than the audit-trail concern.
+ *   on `operation` that does not yet include `ANALYZE`;
  * - [riven.core.service.enrichment.provider.EmbeddingProvider] — embedding generation is downstream of
  *   `analyzeSemantics` and out of scope.
  */
@@ -129,7 +130,7 @@ private object ConnotationPipelineTestContainer {
     riven.core.configuration.util.LoggerConfig::class,
     riven.core.service.enrichment.EnrichmentService::class,
     riven.core.service.connotation.ConnotationAnalysisService::class,
-    riven.core.service.connotation.ConnotationTier1Mapper::class,
+    riven.core.service.connotation.DeterministicConnotationMapper::class,
     riven.core.service.catalog.ManifestCatalogService::class,
     riven.core.service.entity.EntityAttributeService::class,
 )
@@ -193,7 +194,7 @@ class ConnotationPipelineIntegrationTestConfig {
     /**
      * `WorkspaceService` is heavyweight (UserService, StorageService, ApplicationEventPublisher,
      * ActivityService …). Only [WorkspaceService.isConnotationEnabled] is needed by the
-     * SENTIMENT axis path — short-circuit it via a thin mock.
+     * SENTIMENT path — short-circuit it via a thin mock.
      */
     @Bean
     fun workspaceService(): riven.core.service.workspace.WorkspaceService {
@@ -207,7 +208,7 @@ class ConnotationPipelineIntegrationTestConfig {
      * `operation` does not yet include the `ANALYZE` value emitted by
      * [riven.core.service.connotation.ConnotationAnalysisService.analyze]. The activity-log
      * write path has unit-test coverage in `ConnotationAnalysisServiceTest` already; this
-     * integration test focuses on the envelope-persistence path.
+     * integration test focuses on the snapshot-persistence path.
      */
     @Bean
     fun activityService(): riven.core.service.activity.ActivityService =
@@ -222,25 +223,25 @@ class ConnotationPipelineIntegrationTestConfig {
 }
 
 /**
- * End-to-end Tier 1 connotation pipeline integration test (Phase B Task 18).
+ * End-to-end DETERMINISTIC-tier connotation pipeline integration test (Phase B Task 18).
  *
- * Verifies that a manifest carrying `connotationSignals` (TIER_1, LINEAR scale `[1,5]` -> `[-1,1]`,
+ * Verifies that a manifest carrying `connotationSignals` (DETERMINISTIC, LINEAR scale `[1,5]` -> `[-1,1]`,
  * theme attributes), combined with a workspace that has opted into connotation analysis and an
- * entity carrying a `satisfaction_score` attribute, produces an `ANALYZED` SENTIMENT axis
- * envelope persisted to `entity_connotation` with the correct score, label, and themes.
+ * entity carrying a `satisfaction_score` attribute, produces an `ANALYZED` SENTIMENT metadata
+ * snapshot persisted to `entity_connotation` with the correct score, label, and themes.
  *
  * The manifest loader is intentionally bypassed — the loader has its own unit tests
  * ([riven.core.service.catalog.ManifestUpsertService] etc.). Instead, the catalog row, workspace
  * entity type, entity instance, and `entity_attributes` rows are seeded directly via repositories.
  * This exercises the live runtime chain: [EnrichmentService.analyzeSemantics]
- *  -> `persistConnotationEnvelope`
+ *  -> `persistConnotationSnapshot`
  *  -> [riven.core.service.connotation.ConnotationAnalysisService.analyze]
- *  -> [riven.core.service.connotation.ConnotationTier1Mapper.analyze]
+ *  -> [riven.core.service.connotation.DeterministicConnotationMapper.analyze]
  *  -> JSONB write to `entity_connotation`.
  *
  * The final assertion runs a Layer-4-style JSONB predicate query
- * (`connotation_metadata->'axes'->'SENTIMENT'->>'sentiment') as float > 0.5`) to prove the
- * persisted shape is queryable. **Axis name is UPPERCASE** in the envelope (per Task 15) — the
+ * (`connotation_metadata->'metadata'->'SENTIMENT'->>'sentiment') as float > 0.5`) to prove the
+ * persisted shape is queryable. **Metadata key is UPPERCASE** in the snapshot (per Task 15) — the
  * predicate matches that.
  */
 @SpringBootTest(
@@ -350,18 +351,18 @@ class ConnotationPipelineIntegrationTest {
     // ------ Test ------
 
     /**
-     * Tier 1 LINEAR scale `[1,5]` -> `[-1,1]` with `satisfaction_score = 5.0` should map to
+     * DETERMINISTIC LINEAR scale `[1,5]` -> `[-1,1]` with `satisfaction_score = 5.0` should map to
      * `sentiment = 1.0`, `sentimentLabel = VERY_POSITIVE`, and pass the `tags` value through
-     * verbatim as the single theme entry. The other axes (RELATIONAL / STRUCTURAL) must still
-     * be populated, and the persisted envelope must be queryable via a JSONB predicate.
+     * verbatim as the single theme entry. The other categories (RELATIONAL / STRUCTURAL) must still
+     * be populated, and the persisted snapshot must be queryable via a JSONB predicate.
      */
     @Test
-    fun `Tier 1 LINEAR pipeline produces ANALYZED SENTIMENT axis with correct score and themes`() {
+    fun `DETERMINISTIC LINEAR pipeline produces ANALYZED SENTIMENT metadata with correct score and themes`() {
         // 1. Seed catalog manifest + catalog entity type with connotationSignals.
         val manifestId = seedCatalogManifestWithConnotationSignals()
 
         // 2. Seed workspace entity type wired to the catalog manifest, with attributeKeyMapping
-        //    so the SENTIMENT axis can resolve manifest keys -> attribute UUIDs.
+        //    so the SENTIMENT mapper can resolve manifest keys -> attribute UUIDs.
         val entityType = seedWorkspaceEntityType(manifestId)
         val entityTypeId = requireNotNull(entityType.id)
 
@@ -386,41 +387,42 @@ class ConnotationPipelineIntegrationTest {
         val context = enrichmentService.analyzeSemantics(queueItemId)
 
         // 6. Verify the in-memory context surfaces the ANALYZED sentiment.
-        assertThat(context.sentiment).isNotNull
-        assertThat(context.sentiment!!.status).isEqualTo(ConnotationStatus.ANALYZED)
-        assertThat(context.sentiment!!.sentiment).isCloseTo(1.0, within(1e-9))
-        assertThat(context.sentiment!!.sentimentLabel).isEqualTo(SentimentLabel.VERY_POSITIVE)
-        assertThat(context.sentiment!!.analysisTier).isEqualTo(AnalysisTier.TIER_1)
-        // Tier 1 mapper stamps the active version from ConnotationAnalysisConfigurationProperties (default "v1").
-        assertThat(context.sentiment!!.analysisVersion).isEqualTo("v1")
+        assertNotNull(context.sentiment).run {
+            assertThat(this.status).isEqualTo(ConnotationStatus.ANALYZED)
+            assertThat(this.sentiment).isCloseTo(1.0, within(1e-9))
+            assertThat(this.sentimentLabel).isEqualTo(SentimentLabel.VERY_POSITIVE)
+            assertThat(this.analysisTier).isEqualTo(AnalysisTier.DETERMINISTIC)
+            // DETERMINISTIC mapper stamps the active version from ConnotationAnalysisConfigurationProperties (default "v1").
+            assertThat(this.analysisVersion).isEqualTo("v1")
+        }
 
-        // 7. Verify the persisted envelope shape via the repository (source of truth).
-        val persisted = entityConnotationRepository.findByEntityId(entityId)
-        assertThat(persisted).isNotNull
-        val envelope = persisted!!.connotationMetadata
-        assertThat(envelope.envelopeVersion).isEqualTo("v1")
 
-        val sentiment = envelope.axes.sentiment
-        assertThat(sentiment).isNotNull
-        assertThat(sentiment!!.status).isEqualTo(ConnotationStatus.ANALYZED)
-        assertThat(sentiment.sentiment).isCloseTo(1.0, within(1e-9))
-        assertThat(sentiment.sentimentLabel).isEqualTo(SentimentLabel.VERY_POSITIVE)
-        assertThat(sentiment.analysisTier).isEqualTo(AnalysisTier.TIER_1)
-        // ConnotationTier1Mapper passes themeValues through verbatim — themes is a single
-        // concat string per attribute, not split into tokens.
-        assertThat(sentiment.themes).containsExactly("billing,fast")
+        // 7. Verify the persisted metadata shape via the repository (source of truth).
+        entityConnotationRepository.findByEntityId(entityId).let {
+            assertNotNull(it).run {
+                assertThat(this.connotationMetadata.snapshotVersion).isEqualTo("v1")
+                assertNotNull(this.connotationMetadata.metadata.sentiment).run {
+                    assertThat(this.status).isEqualTo(ConnotationStatus.ANALYZED)
+                    assertThat(this.sentiment).isCloseTo(1.0, within(1e-9))
+                    assertThat(this.sentimentLabel).isEqualTo(SentimentLabel.VERY_POSITIVE)
+                    assertThat(this.analysisTier).isEqualTo(AnalysisTier.DETERMINISTIC)
+                    assertThat(this.analysisVersion).isEqualTo("v1")
+                    assertThat(this.themes).containsExactly("billing,fast")
+                }
+                assertNotNull(this.connotationMetadata.metadata.structural).run {
+                    assertThat(this.entityTypeName).isEqualTo("Review")
+                }
+                assertNotNull(this.connotationMetadata.metadata.relational)
 
-        // 8. Sibling axes still populated (Phase A behaviour preserved by the SENTIMENT path).
-        assertThat(envelope.axes.relational).isNotNull
-        assertThat(envelope.axes.structural).isNotNull
-        assertThat(envelope.axes.structural!!.entityTypeName).isEqualTo("Review")
+            }
+        }
 
-        // 9. Layer-4 predicate: queryable via JSONB path with UPPERCASE axis name (Task 15).
+        // 9. Layer-4 predicate: queryable via JSONB path with UPPERCASE metadata key (Task 15).
         val positiveCount = jdbcTemplate.queryForObject(
             """
             SELECT count(*) FROM entity_connotation
             WHERE workspace_id = ?
-              AND (connotation_metadata->'axes'->'SENTIMENT'->>'sentiment')::float > 0.5
+              AND (connotation_metadata->'metadata'->'SENTIMENT'->>'sentiment')::float > 0.5
             """.trimIndent(),
             Long::class.java,
             workspaceId,
@@ -432,7 +434,7 @@ class ConnotationPipelineIntegrationTest {
 
     /**
      * Creates a `manifest_catalog` row + matching `catalog_entity_types` row with
-     * a TIER_1 LINEAR `connotationSignals` block. Bypasses [riven.core.service.catalog.ManifestUpsertService]
+     * a DETERMINISTIC LINEAR `connotationSignals` block. Bypasses [riven.core.service.catalog.ManifestUpsertService]
      * — the upsert path is exercised by its own unit/integration tests. Returns the manifest ID.
      */
     private fun seedCatalogManifestWithConnotationSignals(): UUID {
@@ -466,7 +468,7 @@ class ConnotationPipelineIntegrationTest {
                     ),
                 ),
                 connotationSignals = ConnotationSignals(
-                    tier = AnalysisTier.TIER_1,
+                    tier = AnalysisTier.DETERMINISTIC,
                     sentimentAttribute = "satisfaction_score",
                     sentimentScale = SentimentScale(
                         sourceMin = 1.0,
@@ -563,7 +565,7 @@ class ConnotationPipelineIntegrationTest {
     }
 
     private fun textValue(value: String): tools.jackson.databind.JsonNode =
-        JsonNodeFactory.instance.textNode(value)
+        JsonNodeFactory.instance.stringNode(value)
 
     private fun numberValue(value: Double): tools.jackson.databind.JsonNode =
         JsonNodeFactory.instance.numberNode(value)

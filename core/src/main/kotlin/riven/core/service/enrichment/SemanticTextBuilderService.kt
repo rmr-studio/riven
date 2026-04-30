@@ -3,7 +3,8 @@ package riven.core.service.enrichment
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
-import riven.core.models.connotation.SentimentAxis
+
+import riven.core.models.connotation.SentimentMetadata
 import riven.core.models.enrichment.EnrichedTextResult
 import riven.core.models.enrichment.EnrichmentAttributeContext
 import riven.core.models.enrichment.EnrichmentContext
@@ -70,7 +71,7 @@ class SemanticTextBuilderService(
         val fullRelationships = buildRelationshipSummariesSection(context)
         val fullCluster = buildClusterContextSection(context)
         val fullDefinitions = buildRelationshipSemanticDefinitionsSection(context)
-        val fullConnotation = context.sentiment?.let { buildConnotationContextSection(it) }
+        val fullConnotation: String? = context.sentiment?.let { buildConnotationContextSection(it) }
 
         val mandatoryLength = sections.sumOf { it.length } + (sections.size - 1) * 2
         val remaining = listOfNotNull(fullAttributes, fullRelationships, fullCluster, fullDefinitions, fullConnotation)
@@ -280,7 +281,7 @@ class SemanticTextBuilderService(
      * ANALYZED SENTIMENT axis. Bounded ≤ MAX_CONNOTATION_SECTION_CHARS to prevent runaway
      * theme lists from inflating the text.
      */
-    private fun buildConnotationContextSection(sentiment: SentimentAxis): String {
+    private fun buildConnotationContextSection(sentiment: SentimentMetadata): String {
         val score = sentiment.sentiment?.let { "%.2f".format(it) } ?: "—"
         val label = sentiment.sentimentLabel?.name ?: "UNKNOWN"
         val themesText = sentiment.themes.joinToString(", ").let {

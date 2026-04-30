@@ -1,19 +1,20 @@
 package riven.core.service.connotation
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
+import riven.core.enums.connotation.ConnotationStatus
 import riven.core.models.catalog.ConnotationSignals
 import riven.core.models.catalog.ScaleMappingType
 import riven.core.models.catalog.SentimentScale
 import riven.core.models.connotation.AnalysisTier
-import riven.core.models.connotation.ConnotationStatus
 import riven.core.models.connotation.SentimentAnalysisOutcome
 import riven.core.models.connotation.SentimentFailureReason
 import riven.core.models.connotation.SentimentLabel
 
-class ConnotationTier1MapperTest {
+class DeterministicConnotationMapperTest {
 
-    private val mapper = ConnotationTier1Mapper()
+    private val mapper = DeterministicConnotationMapper()
     private val activeVersion = "v1"
 
     private fun signals(
@@ -23,7 +24,7 @@ class ConnotationTier1MapperTest {
         mappingType: ScaleMappingType = ScaleMappingType.LINEAR,
         themes: List<String> = emptyList(),
     ) = ConnotationSignals(
-        tier = AnalysisTier.TIER_1,
+        tier = AnalysisTier.DETERMINISTIC,
         sentimentAttribute = attribute,
         sentimentScale = SentimentScale(sourceMin, sourceMax, targetMin, targetMax, mappingType),
         themeAttributes = themes,
@@ -38,44 +39,48 @@ class ConnotationTier1MapperTest {
             activeVersion = activeVersion,
         )
 
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(0.0, axis.sentiment!!, 1e-9)
-        assertEquals(SentimentLabel.NEUTRAL, axis.sentimentLabel)
-        assertEquals(activeVersion, axis.analysisVersion)
-        assertEquals(AnalysisTier.TIER_1, axis.analysisTier)
-        assertEquals("connotation-tier1-linear-v1", axis.analysisModel)
-        assertEquals(ConnotationStatus.ANALYZED, axis.status)
-        assertNotNull(axis.analyzedAt)
+        // Assert Success
+        assertTrue(outcome is SentimentAnalysisOutcome.Success)
+        (outcome as SentimentAnalysisOutcome.Success).metadata.also { metadata ->
+             assertEquals(0.0, metadata.sentiment!!, 1e-9)
+             assertEquals(SentimentLabel.NEUTRAL, metadata.sentimentLabel)
+             assertEquals(activeVersion, metadata.analysisVersion)
+             assertEquals(AnalysisTier.DETERMINISTIC, metadata.analysisTier)
+             assertEquals("deterministic-connotation-linear-v1", metadata.analysisModel)
+             assertEquals(ConnotationStatus.ANALYZED, metadata.status)
+             assertNotNull(metadata.analyzedAt)
+        }
+
     }
 
     @Test
     fun `LINEAR maps source max to plus one`() {
         val outcome = mapper.analyze(signals(), 5.0, emptyMap(), activeVersion)
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(1.0, axis.sentiment!!, 1e-9)
-        assertEquals(SentimentLabel.VERY_POSITIVE, axis.sentimentLabel)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(1.0, metadata.sentiment!!, 1e-9)
+        assertEquals(SentimentLabel.VERY_POSITIVE, metadata.sentimentLabel)
     }
 
     @Test
     fun `LINEAR maps source min to minus one`() {
         val outcome = mapper.analyze(signals(), 1.0, emptyMap(), activeVersion)
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(-1.0, axis.sentiment!!, 1e-9)
-        assertEquals(SentimentLabel.VERY_NEGATIVE, axis.sentimentLabel)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(-1.0, metadata.sentiment!!, 1e-9)
+        assertEquals(SentimentLabel.VERY_NEGATIVE, metadata.sentimentLabel)
     }
 
     @Test
     fun `LINEAR clamps below sourceMin to targetMin`() {
         val outcome = mapper.analyze(signals(), 0.0, emptyMap(), activeVersion)
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(-1.0, axis.sentiment!!, 1e-9)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(-1.0, metadata.sentiment!!, 1e-9)
     }
 
     @Test
     fun `LINEAR clamps above sourceMax to targetMax`() {
         val outcome = mapper.analyze(signals(), 99.0, emptyMap(), activeVersion)
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(1.0, axis.sentiment!!, 1e-9)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(1.0, metadata.sentiment!!, 1e-9)
     }
 
     @Test
@@ -84,9 +89,9 @@ class ConnotationTier1MapperTest {
             signals(mappingType = ScaleMappingType.THRESHOLD),
             sourceValue = 2.0, themeValues = emptyMap(), activeVersion = activeVersion,
         )
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(-1.0, axis.sentiment!!, 1e-9)
-        assertEquals(SentimentLabel.VERY_NEGATIVE, axis.sentimentLabel)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(-1.0, metadata.sentiment!!, 1e-9)
+        assertEquals(SentimentLabel.VERY_NEGATIVE, metadata.sentimentLabel)
     }
 
     @Test
@@ -95,9 +100,9 @@ class ConnotationTier1MapperTest {
             signals(mappingType = ScaleMappingType.THRESHOLD),
             sourceValue = 4.0, themeValues = emptyMap(), activeVersion = activeVersion,
         )
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(1.0, axis.sentiment!!, 1e-9)
-        assertEquals(SentimentLabel.VERY_POSITIVE, axis.sentimentLabel)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(1.0, metadata.sentiment!!, 1e-9)
+        assertEquals(SentimentLabel.VERY_POSITIVE, metadata.sentimentLabel)
     }
 
     @Test
@@ -122,8 +127,8 @@ class ConnotationTier1MapperTest {
             themeValues = mapOf("tags" to "billing,support", "category" to "complaint"),
             activeVersion = activeVersion,
         )
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(listOf("billing,support", "complaint"), axis.themes)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(listOf("billing,support", "complaint"), metadata.themes)
     }
 
     @Test
@@ -134,14 +139,14 @@ class ConnotationTier1MapperTest {
             themeValues = mapOf("tags" to "billing", "category" to null),
             activeVersion = activeVersion,
         )
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(listOf("billing"), axis.themes)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(listOf("billing"), metadata.themes)
     }
 
     @Test
     fun `numeric strings are parsed as source value`() {
         val outcome = mapper.analyze(signals(), sourceValue = "3.0", emptyMap(), activeVersion)
-        val axis = (outcome as SentimentAnalysisOutcome.Success).axis
-        assertEquals(0.0, axis.sentiment!!, 1e-9)
+        val metadata = (outcome as SentimentAnalysisOutcome.Success).metadata
+        assertEquals(0.0, metadata.sentiment!!, 1e-9)
     }
 }

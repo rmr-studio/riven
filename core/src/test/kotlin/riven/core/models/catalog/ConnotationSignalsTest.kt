@@ -15,7 +15,7 @@ class ConnotationSignalsTest {
     @Test
     fun `LINEAR sentiment scale round-trips through Jackson`() {
         val signals = ConnotationSignals(
-            tier = AnalysisTier.TIER_1,
+            tier = AnalysisTier.DETERMINISTIC,
             sentimentAttribute = "rating",
             sentimentScale = SentimentScale(
                 sourceMin = 1.0,
@@ -40,7 +40,7 @@ class ConnotationSignalsTest {
     fun `THRESHOLD mapping type deserializes from JSON`() {
         val json = """
             {
-                "tier": "TIER_1",
+                "tier": "DETERMINISTIC",
                 "sentimentAttribute": "score",
                 "sentimentScale": {
                     "sourceMin": 0.0,
@@ -55,7 +55,7 @@ class ConnotationSignalsTest {
 
         val parsed = mapper.readValue(json, ConnotationSignals::class.java)
 
-        assertEquals(AnalysisTier.TIER_1, parsed.tier)
+        assertEquals(AnalysisTier.DETERMINISTIC, parsed.tier)
         assertEquals("score", parsed.sentimentAttribute)
         assertEquals(ScaleMappingType.THRESHOLD, parsed.sentimentScale.mappingType)
         assertEquals(0.0, parsed.sentimentScale.sourceMin)

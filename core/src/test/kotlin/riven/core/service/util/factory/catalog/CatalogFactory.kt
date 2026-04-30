@@ -78,7 +78,7 @@ object CatalogFactory {
 
     /** Realistic default ConnotationSignals payload for tests. */
     fun connotationSignals(
-        tier: AnalysisTier = AnalysisTier.TIER_1,
+        tier: AnalysisTier = AnalysisTier.DETERMINISTIC,
         sentimentAttribute: String = "rating",
         sentimentScale: SentimentScale = sentimentScale(),
         themeAttributes: List<String> = listOf("review_text"),

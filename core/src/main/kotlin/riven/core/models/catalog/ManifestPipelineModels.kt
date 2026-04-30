@@ -49,7 +49,7 @@ data class ResolvedEntityType(
  *
  * Declares which source attribute carries sentiment-bearing data and how to map it
  * to the unified `[-1.0, +1.0]` sentiment score consumed by the
- * [riven.core.models.connotation.SentimentAxis] of the connotation envelope.
+ * [riven.core.models.connotation.SentimentMetadata] of the connotation snapshot.
  */
 data class ConnotationSignals(
     val tier: AnalysisTier,
