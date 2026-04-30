@@ -41,10 +41,17 @@ import riven.core.repository.entity.EntityTypeSemanticMetadataRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.repository.identity.IdentityClusterMemberRepository
+import riven.core.models.catalog.ConnotationSignals
+import riven.core.models.catalog.ScaleMappingType
+import riven.core.models.catalog.SentimentScale
+import riven.core.models.connotation.AnalysisTier
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.catalog.ManifestCatalogService
+import riven.core.service.connotation.ConnotationAnalysisService
 import riven.core.service.entity.EntityAttributeService
 import riven.core.configuration.properties.EnrichmentConfigurationProperties
 import riven.core.service.enrichment.provider.EmbeddingProvider
+import riven.core.service.workspace.WorkspaceService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.workflow.enrichment.EnrichmentWorkflow
 import riven.core.service.util.SecurityTestConfig
@@ -53,6 +60,8 @@ import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.service.util.factory.identity.IdentityFactory
 import riven.core.service.util.factory.workflow.ExecutionQueueFactory
 import org.junit.jupiter.api.BeforeEach
+import riven.core.entity.connotation.EntityConnotationEntity
+import riven.core.models.connotation.SentimentMetadata
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -109,6 +118,15 @@ class EnrichmentServiceTest : BaseServiceTest() {
     @MockitoBean
     private lateinit var workflowClient: WorkflowClient
 
+    @MockitoBean
+    private lateinit var workspaceService: WorkspaceService
+
+    @MockitoBean
+    private lateinit var manifestCatalogService: ManifestCatalogService
+
+    @MockitoBean
+    private lateinit var connotationAnalysisService: ConnotationAnalysisService
+
     @Autowired
     private lateinit var enrichmentService: EnrichmentService
 
@@ -118,6 +136,9 @@ class EnrichmentServiceTest : BaseServiceTest() {
     @BeforeEach
     fun setUp() {
         whenever(enrichmentProperties.vectorDimensions).thenReturn(1536)
+        // Default: SENTIMENT remains NOT_APPLICABLE for tests that don't care about
+        // connotation. Individual tests override `isConnotationEnabled` / signals as needed.
+        whenever(workspaceService.isConnotationEnabled(any())).thenReturn(false)
     }
 
     /**
@@ -976,7 +997,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
     /**
      * Phase A: SENTIMENT metadata is a placeholder (NOT_APPLICABLE) until Phase B activates the
-     * Tier 1 mapper. RELATIONAL + STRUCTURAL metadata are populated deterministically.
+     * DETERMINISTIC mapper. RELATIONAL + STRUCTURAL metadata are populated deterministically.
      */
     @Test
     fun `analyzeSemantics snapshot has placeholder SENTIMENT and populated RELATIONAL+STRUCTURAL metadata`() {
@@ -1059,6 +1080,169 @@ class EnrichmentServiceTest : BaseServiceTest() {
         assertEquals("Email", attrSnapshot.semanticLabel)
         assertEquals(SemanticAttributeClassification.IDENTIFIER, attrSnapshot.classification)
         assertEquals(SchemaType.TEXT, attrSnapshot.schemaType)
+    }
+
+    // ------------------------------------------------------------------
+    // analyzeSemantics: SENTIMENT wiring (Phase B Task 12)
+    // ------------------------------------------------------------------
+
+    /**
+     * When the workspace flag is enabled and the entity type has manifest connotation signals,
+     * the SENTIMENT metadata is delegated to ConnotationAnalysisService and its result persisted
+     * verbatim (ANALYZED in this case) onto the connotation snapshot.
+     */
+    @Test
+    fun `persistConnotationSnapshot populates SENTIMENT when workspace flag is on and signals exist`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+
+        val signals = ConnotationSignals(
+            tier = AnalysisTier.DETERMINISTIC,
+            sentimentAttribute = "rating",
+            sentimentScale = SentimentScale(
+                sourceMin = 1.0,
+                sourceMax = 5.0,
+                targetMin = -1.0,
+                targetMax = 1.0,
+                mappingType = ScaleMappingType.LINEAR,
+            ),
+            themeAttributes = emptyList(),
+        )
+        val analysedMetadata = SentimentMetadata(
+            sentiment = 0.75,
+            analysisVersion = "tier1-v1",
+            analysisTier = AnalysisTier.DETERMINISTIC,
+            status = ConnotationStatus.ANALYZED,
+            analyzedAt = ZonedDateTime.now(),
+        )
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(true)
+        whenever(manifestCatalogService.getConnotationSignalsForEntityType(typeId)).thenReturn(signals)
+        whenever(
+            connotationAnalysisService.analyze(
+                eq(entityId),
+                eq(workspaceId),
+                eq(signals),
+                anyOrNull(),
+                any(),
+            )
+        ).thenReturn(analysedMetadata)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        val sentiment = requireNotNull(snapshot.metadata.sentiment)
+        assertEquals(ConnotationStatus.ANALYZED, sentiment.status)
+        assertEquals(0.75, sentiment.sentiment)
+        assertEquals(AnalysisTier.DETERMINISTIC, sentiment.analysisTier)
+    }
+
+    /**
+     * When the workspace flag is off, the SENTIMENT metadata must remain NOT_APPLICABLE
+     * and ConnotationAnalysisService must NOT be invoked at all.
+     */
+    @Test
+    fun `persistConnotationSnapshot leaves SENTIMENT at NOT_APPLICABLE when workspace flag is off`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(false)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        val sentiment = requireNotNull(snapshot.metadata.sentiment)
+        assertEquals(ConnotationStatus.NOT_APPLICABLE, sentiment.status)
+
+        verify(connotationAnalysisService, never()).analyze(any(), any(), any(), anyOrNull(), any())
+    }
+
+    /**
+     * Workspace flag is on but the manifest doesn't declare connotation signals for this
+     * entity type (e.g. a custom user-defined type). The SENTIMENT metadata must remain
+     * NOT_APPLICABLE, and ConnotationAnalysisService must not be invoked.
+     */
+    @Test
+    fun `persistConnotationSnapshot leaves SENTIMENT at NOT_APPLICABLE when manifest has no signals`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(true)
+        whenever(manifestCatalogService.getConnotationSignalsForEntityType(typeId)).thenReturn(null)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        val sentiment = requireNotNull(snapshot.metadata.sentiment)
+        assertEquals(ConnotationStatus.NOT_APPLICABLE, sentiment.status)
+
+        verify(connotationAnalysisService, never()).analyze(any(), any(), any(), anyOrNull(), any())
+    }
+
+    /**
+     * When SENTIMENT is gated off, RELATIONAL and STRUCTURAL must still be populated
+     * — gating the sentiment computation must not regress the deterministic categories.
+     */
+    @Test
+    fun `persistConnotationSnapshot still writes RELATIONAL and STRUCTURAL when SENTIMENT is gated off`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(false)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val snapshot = captureUpsertedSnapshot(entityId, workspaceId)
+        assertNotNull(snapshot.metadata.relational)
+        assertNotNull(snapshot.metadata.structural)
     }
 
     // ------------------------------------------------------------------

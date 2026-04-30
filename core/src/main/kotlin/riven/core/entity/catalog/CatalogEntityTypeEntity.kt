@@ -11,6 +11,7 @@ import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.models.catalog.CatalogEntityTypeModel
 import riven.core.models.catalog.CatalogSemanticMetadataModel
+import riven.core.models.catalog.ConnotationSignals
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -79,6 +80,10 @@ data class CatalogEntityTypeEntity(
     @Column(name = "columns", columnDefinition = "jsonb", nullable = true)
     var columns: List<Map<String, Any>>? = null,
 
+    @Type(JsonBinaryType::class)
+    @Column(name = "connotation_signals", columnDefinition = "jsonb", nullable = true)
+    var connotationSignals: ConnotationSignals? = null,
+
     @Column(name = "schema_hash", length = 64)
     var schemaHash: String? = null,
 
@@ -105,6 +110,7 @@ data class CatalogEntityTypeEntity(
         readonly = readonly,
         schema = schema,
         columns = columns,
+        connotationSignals = connotationSignals,
         schemaHash = schemaHash,
         semanticMetadata = semanticMetadata
     )

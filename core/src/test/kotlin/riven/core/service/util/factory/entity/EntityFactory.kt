@@ -179,7 +179,7 @@ object EntityFactory {
         typeId: UUID = UUID.randomUUID(),
         attributeId: UUID = UUID.randomUUID(),
         schemaType: SchemaType = SchemaType.TEXT,
-        value: JsonNode = JsonNodeFactory.instance.textNode("test-value"),
+        value: JsonNode = JsonNodeFactory.instance.stringNode("test-value"),
     ): EntityAttributeEntity {
         return EntityAttributeEntity(
             id = id,

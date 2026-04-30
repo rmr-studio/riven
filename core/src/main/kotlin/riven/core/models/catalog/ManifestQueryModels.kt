@@ -58,6 +58,7 @@ data class CatalogEntityTypeModel(
     val readonly: Boolean,
     val schema: Map<String, Any>,
     val columns: List<Map<String, Any>>?,
+    val connotationSignals: ConnotationSignals? = null,
     val schemaHash: String?,
     val semanticMetadata: List<CatalogSemanticMetadataModel>
 )
