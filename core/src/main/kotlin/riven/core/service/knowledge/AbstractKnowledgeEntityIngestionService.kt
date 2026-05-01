@@ -7,7 +7,7 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.integration.SourceType
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.util.UUID
 
@@ -23,11 +23,11 @@ import java.util.UUID
  * The base owns:
  *   - workspace entity-type lookup (with onboarding-incomplete error)
  *   - idempotent upsert via `(workspaceId, sourceIntegrationId, sourceExternalId)`
- *   - the [EntityService.saveEntityInternal] call (no JWT-bound auth check)
+ *   - the [EntityIngestionService.saveEntityInternal] call (no JWT-bound auth check)
  *   - relationship reconciliation against [EntityTypeRelationshipService]
  */
 abstract class AbstractKnowledgeEntityIngestionService<TInput : KnowledgeIngestionInput>(
-    protected val entityService: EntityService,
+    protected val entityIngestionService: EntityIngestionService,
     protected val entityTypeRepository: EntityTypeRepository,
     protected val entityRepository: EntityRepository,
     protected val entityTypeRelationshipService: EntityTypeRelationshipService,
@@ -49,18 +49,17 @@ abstract class AbstractKnowledgeEntityIngestionService<TInput : KnowledgeIngesti
     @Transactional
     open fun upsert(input: TInput): EntityEntity {
         val entityType = resolveEntityType(input.workspaceId)
-        val existing = idempotentLookup(input)
+        val existingId = input.existingId ?: idempotentLookup(input)?.id
         val payload = buildAttributePayload(entityType, input)
 
-        val saved = entityService.saveEntityInternal(
+        val saved = entityIngestionService.saveEntityInternal(
             workspaceId = input.workspaceId,
             entityTypeId = requireNotNull(entityType.id) { "$entityTypeKey entity type id must not be null" },
-            existingId = existing?.id,
+            existingId = existingId,
             attributePayload = payload,
             sourceType = input.sourceType,
             sourceIntegrationId = input.sourceIntegrationId,
             sourceExternalId = input.sourceExternalId,
-            readonly = input.readonly,
         )
 
         relationshipBatches(input).forEach { batch ->
@@ -72,7 +71,7 @@ abstract class AbstractKnowledgeEntityIngestionService<TInput : KnowledgeIngesti
     }
 
     open fun softDelete(workspaceId: UUID, entityId: UUID) {
-        entityService.softDeleteEntityInternal(workspaceId, entityId)
+        entityIngestionService.softDeleteEntityInternal(workspaceId, entityId)
     }
 
     private fun resolveEntityType(workspaceId: UUID): EntityTypeEntity =
@@ -115,7 +114,7 @@ abstract class AbstractKnowledgeEntityIngestionService<TInput : KnowledgeIngesti
         val sourceId = requireNotNull(knowledgeEntity.id) { "knowledgeEntity.id" }
         val typeId = knowledgeEntity.typeId
         val def = entityTypeRelationshipService.getOrCreateSystemDefinition(workspaceId, typeId, batch.systemType)
-        entityService.replaceRelationshipsInternal(
+        entityIngestionService.replaceRelationshipsInternal(
             workspaceId = workspaceId,
             sourceEntityId = sourceId,
             relationshipDefinitionId = requireNotNull(def.id) { "system relationship definition id must not be null" },

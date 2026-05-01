@@ -12,7 +12,7 @@ import riven.core.models.common.validation.SchemaOptions
 import riven.core.models.core.AttributeSemantics
 import riven.core.models.core.CoreModelAttribute
 import riven.core.models.core.ProjectionAcceptRule
-import riven.core.models.core.models.base.ChurnEventBase
+import riven.core.models.core.base.ChurnEventBase
 
 /**
  * DTC Churn Event — records when and why a DTC customer relationship ended.

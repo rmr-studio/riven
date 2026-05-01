@@ -1,4 +1,4 @@
-package riven.core.models.core.models.base
+package riven.core.models.core.base
 
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.common.validation.SchemaType

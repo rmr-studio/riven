@@ -811,6 +811,36 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
         verify(definitionRepository, never()).save(any<RelationshipDefinitionEntity>())
     }
 
+    /**
+     * Regression test for r3166515144: getOrCreateSystemDefinition must reject existing
+     * definitions whose `workspace_id` differs from the caller's `workspaceId`.
+     *
+     * Synthesises a definition row owned by a different workspace and asserts that the
+     * lookup throws rather than returning the foreign row. @PreAuthorize would normally
+     * stop this on the public path, but the unit test forces the path to lock in the
+     * inner workspace guard so a future change to the lookup query does not silently
+     * regress.
+     */
+    @Test
+    fun `getOrCreateSystemDefinition - rejects existing row from a different workspace`() {
+        val noteTypeId = UUID.randomUUID()
+        val foreignWorkspaceId = UUID.randomUUID()
+        val foreignDefinition = EntityFactory.createRelationshipDefinitionEntity(
+            id = UUID.randomUUID(),
+            workspaceId = foreignWorkspaceId,
+            sourceEntityTypeId = noteTypeId,
+            name = "Attachments",
+            systemType = SystemRelationshipType.ATTACHMENT,
+        )
+        whenever(definitionRepository.findBySourceEntityTypeIdAndSystemType(noteTypeId, SystemRelationshipType.ATTACHMENT))
+            .thenReturn(Optional.of(foreignDefinition))
+
+        org.junit.jupiter.api.assertThrows<IllegalArgumentException> {
+            service.getOrCreateSystemDefinition(workspaceId, noteTypeId, SystemRelationshipType.ATTACHMENT)
+        }
+        verify(definitionRepository, never()).save(any<RelationshipDefinitionEntity>())
+    }
+
     // ------ Readonly Guard Tests ------
 
     @Nested

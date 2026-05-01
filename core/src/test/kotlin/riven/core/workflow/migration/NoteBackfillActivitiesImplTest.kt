@@ -112,14 +112,29 @@ class NoteBackfillActivitiesImplTest {
                 .thenReturn(Optional.of(NoteFactory.createEntity(id = id, workspaceId = workspaceId)))
             whenever(noteAttachmentRepository.findEntityIdsByNoteId(id)).thenReturn(emptyList())
         }
+        // First migrateBatch call succeeds for every id; second call simulates the
+        // already-migrated-on-restart case where the entity-side unique constraint
+        // rejects every upsert with a duplicate-key violation.
+        val savedEntity = EntityFactory.createEntityEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+        )
         whenever(noteEntityIngestionService.upsert(any()))
+            .thenReturn(savedEntity)
+            .thenReturn(savedEntity)
+            .thenReturn(savedEntity)
             .thenThrow(DataIntegrityViolationException("duplicate"))
 
-        val result = activities.migrateBatch(workspaceId, noteIds)
+        val first = activities.migrateBatch(workspaceId, noteIds)
 
-        assertThat(result.skipped).isEqualTo(noteIds.size)
-        assertThat(result.migrated).isEqualTo(0)
-        assertThat(result.failed).isEqualTo(0)
+        assertThat(first.migrated).isEqualTo(noteIds.size)
+        assertThat(first.skipped).isEqualTo(0)
+        assertThat(first.failed).isEqualTo(0)
+
+        val second = activities.migrateBatch(workspaceId, noteIds)
+
+        assertThat(second.skipped).isEqualTo(noteIds.size)
+        assertThat(second.migrated).isEqualTo(0)
+        assertThat(second.failed).isEqualTo(0)
     }
 
     @Test

@@ -92,6 +92,20 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     )
 
     /**
+     * Hard-delete relationships scoped to a sub-reference parent (ATTRIBUTE / RELATIONSHIP
+     * target kinds). The owning entity_type id is included in the predicate so reconciliation
+     * for one parent does not touch rows under a different parent that happen to share
+     * (sourceId, definitionId, targetKind).
+     */
+    fun deleteAllBySourceIdAndDefinitionIdAndTargetKindAndTargetParentIdAndTargetIdIn(
+        sourceId: UUID,
+        definitionId: UUID,
+        targetKind: riven.core.enums.entity.RelationshipTargetKind,
+        targetParentId: UUID,
+        targetIds: Collection<UUID>,
+    )
+
+    /**
      * Find all relationships for a target entity with a specific definition ID (inverse lookup).
      */
     @Query("""

@@ -12,7 +12,7 @@ import riven.core.models.common.validation.SchemaOptions
 import riven.core.models.core.AttributeSemantics
 import riven.core.models.core.CoreModelAttribute
 import riven.core.models.core.ProjectionAcceptRule
-import riven.core.models.core.models.base.BillingEventBase
+import riven.core.models.core.base.BillingEventBase
 
 /**
  * DTC Billing Event — a financial event in the ecommerce transaction lifecycle.

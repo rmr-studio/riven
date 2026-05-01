@@ -1,5 +1,6 @@
 package riven.core.service.knowledge
 
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
@@ -8,6 +9,9 @@ import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.knowledge.DefinitionCategory
 import riven.core.enums.knowledge.DefinitionSource
 import riven.core.enums.knowledge.DefinitionStatus
+import riven.core.enums.knowledge.KnowledgeEntityTypeKey
+import riven.core.exceptions.NotFoundException
+import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.knowledge.AttributeRef
 import riven.core.models.knowledge.WorkspaceBusinessDefinition
@@ -45,14 +49,16 @@ class GlossaryEntityProjector(
     // ------ Public read operations ------
 
     /** Project a single glossary entity into a [WorkspaceBusinessDefinition]. */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun project(workspaceId: UUID, entity: EntityEntity): WorkspaceBusinessDefinition {
         val type = resolveGlossaryType(workspaceId)
         return buildDefinition(entity, type)
     }
 
     /** Project every glossary entity in the workspace. */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun listAll(workspaceId: UUID): List<WorkspaceBusinessDefinition> {
-        val rows = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, "glossary")
+        val rows = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, KnowledgeEntityTypeKey.GLOSSARY.key)
         if (rows.isEmpty()) return emptyList()
         val type = resolveGlossaryType(workspaceId)
         return rows.map { buildDefinition(it, type) }
@@ -63,14 +69,15 @@ class GlossaryEntityProjector(
      * the underlying [EntityEntity] so the service layer can decide between conflict /
      * update branches without re-reading.
      */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun findByNormalizedTerm(workspaceId: UUID, normalizedTerm: String): EntityEntity? {
         val type = resolveGlossaryType(workspaceId)
         val mapping = type.attributeKeyMapping
-            ?: error("glossary entity type missing attributeKeyMapping")
+            ?: throw SchemaValidationException(listOf("glossary entity type missing attributeKeyMapping"))
         val normalizedAttrId = mapping["normalized_term"]?.let(UUID::fromString)
-            ?: error("glossary entity type missing 'normalized_term' attribute mapping")
+            ?: throw SchemaValidationException(listOf("glossary entity type missing 'normalized_term' attribute mapping"))
 
-        val rows = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, "glossary")
+        val rows = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, KnowledgeEntityTypeKey.GLOSSARY.key)
         return rows.firstOrNull { entity ->
             val id = entity.id ?: return@firstOrNull false
             val attrs = entityAttributeService.getAttributes(id)
@@ -82,8 +89,8 @@ class GlossaryEntityProjector(
     // ------ Private helpers ------
 
     private fun resolveGlossaryType(workspaceId: UUID): EntityTypeEntity =
-        entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "glossary").orElseThrow {
-            IllegalStateException(
+        entityTypeRepository.findByworkspaceIdAndKey(workspaceId, KnowledgeEntityTypeKey.GLOSSARY.key).orElseThrow {
+            NotFoundException(
                 "glossary entity type missing for workspace $workspaceId — onboarding incomplete"
             )
         }
@@ -92,9 +99,9 @@ class GlossaryEntityProjector(
         val entityId = requireNotNull(entity.id) { "entity.id" }
         val attrs = entityAttributeService.getAttributes(entityId)
         val mapping = type.attributeKeyMapping
-            ?: error("glossary entity type missing attributeKeyMapping")
+            ?: throw SchemaValidationException(listOf("glossary entity type missing attributeKeyMapping"))
         val (term, normalizedTerm, definition, category, source, isCustomised) =
-            unwrapGlossaryAttributes(mapping, attrs)
+            unwrapGlossaryAttributes(entityId, mapping, attrs)
 
         val (entityTypeRefs, attributeRefs) = readDefinesEdges(entityId)
 
@@ -150,15 +157,27 @@ class GlossaryEntityProjector(
     )
 
     private fun unwrapGlossaryAttributes(
+        entityId: UUID,
         mapping: Map<String, String>,
         attrs: Map<UUID, EntityAttributePrimitivePayload>,
     ): GlossaryAttributes {
         fun id(key: String): UUID = mapping[key]?.let(UUID::fromString)
-            ?: error("glossary entity type missing '$key' attribute mapping")
+            ?: throw SchemaValidationException(listOf("glossary entity type missing '$key' attribute mapping"))
+
+        fun requiredString(key: String): String {
+            val raw = attrs[id(key)]?.value as? String
+            if (raw.isNullOrEmpty()) {
+                throw SchemaValidationException(
+                    listOf("glossary entity $entityId: required attribute '$key' missing or non-string"),
+                )
+            }
+            return raw
+        }
+
         return GlossaryAttributes(
-            term = (attrs[id("term")]?.value as? String) ?: "",
-            normalizedTerm = (attrs[id("normalized_term")]?.value as? String) ?: "",
-            definition = (attrs[id("definition")]?.value as? String) ?: "",
+            term = requiredString("term"),
+            normalizedTerm = requiredString("normalized_term"),
+            definition = requiredString("definition"),
             category = (attrs[id("category")]?.value as? String) ?: DefinitionCategory.CUSTOM.name,
             source = (attrs[id("source")]?.value as? String) ?: DefinitionSource.MANUAL.name,
             isCustomised = (attrs[id("is_customised")]?.value as? Boolean) ?: false,

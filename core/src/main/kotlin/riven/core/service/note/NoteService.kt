@@ -9,6 +9,7 @@ import riven.core.entity.entity.EntityEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.integration.SourceType
+import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.NotFoundException
 import riven.core.models.note.CreateNoteRequest
@@ -18,7 +19,7 @@ import riven.core.models.note.WorkspaceNote
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.util.CursorPage
 import java.util.UUID
 
@@ -33,7 +34,7 @@ import java.util.UUID
  */
 @Service
 class NoteService(
-    private val entityService: EntityService,
+    private val entityIngestionService: EntityIngestionService,
     private val noteEntityIngestionService: NoteEntityIngestionService,
     private val noteEntityProjector: NoteEntityProjector,
     private val authTokenService: AuthTokenService,
@@ -62,9 +63,11 @@ class NoteService(
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional(readOnly = true)
     fun getWorkspaceNote(workspaceId: UUID, noteId: UUID): WorkspaceNote {
-        val entity = entityService.findByIdInternal(workspaceId, noteId)
+        val entity = entityIngestionService.findByIdInternal(workspaceId, noteId)
             ?: throw NotFoundException("Note not found: $noteId")
-        require(entity.typeKey == "note") { "Entity $noteId is not a note (typeKey=${entity.typeKey})" }
+        if (entity.typeKey != KnowledgeEntityTypeKey.NOTE.key) {
+            throw NotFoundException("Note not found: $noteId")
+        }
         return noteEntityProjector.projectWorkspaceNote(workspaceId, entity)
     }
 
@@ -119,7 +122,7 @@ class NoteService(
 
         val currentNote = noteEntityProjector.projectNote(workspaceId, existing)
         val newContent = request.content ?: currentNote.content
-        val newTitle = request.title ?: extractTitle(newContent)
+        val newTitle = request.title ?: currentNote.title
         val newPlaintext = if (request.content != null) extractPlaintext(newContent) else extractPlaintext(currentNote.content)
         val targetEntityIds = currentNote.entityIds.toSet()
 
@@ -134,6 +137,7 @@ class NoteService(
                 sourceIntegrationId = existing.sourceIntegrationId,
                 sourceExternalId = existing.sourceExternalId,
                 linkSource = SourceType.USER_CREATED,
+                existingId = noteId,
             ),
         )
         val note = noteEntityProjector.projectNote(workspaceId, saved)
@@ -182,9 +186,11 @@ class NoteService(
     // ------ Private helpers ------
 
     private fun requireNoteEntity(workspaceId: UUID, noteId: UUID): EntityEntity {
-        val entity = entityService.findByIdInternal(workspaceId, noteId)
+        val entity = entityIngestionService.findByIdInternal(workspaceId, noteId)
             ?: throw NotFoundException("Note not found: $noteId")
-        require(entity.typeKey == "note") { "Entity $noteId is not a note (typeKey=${entity.typeKey})" }
+        if (entity.typeKey != KnowledgeEntityTypeKey.NOTE.key) {
+            throw NotFoundException("Note not found: $noteId")
+        }
         return entity
     }
 

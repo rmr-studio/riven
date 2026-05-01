@@ -119,14 +119,29 @@ class GlossaryBackfillActivitiesImplTest {
             whenever(definitionRepository.findById(id))
                 .thenReturn(Optional.of(BusinessDefinitionFactory.createDefinition(id = id, workspaceId = workspaceId)))
         }
+        // First migrateBatch call succeeds for every id; second call simulates the
+        // already-migrated-on-restart case where the entity-side unique constraint
+        // rejects every upsert with a duplicate-key violation.
+        val savedEntity = EntityFactory.createEntityEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+        )
         whenever(glossaryEntityIngestionService.upsert(any()))
+            .thenReturn(savedEntity)
+            .thenReturn(savedEntity)
+            .thenReturn(savedEntity)
             .thenThrow(DataIntegrityViolationException("duplicate"))
 
-        val result = activities.migrateBatch(workspaceId, ids)
+        val first = activities.migrateBatch(workspaceId, ids)
 
-        assertThat(result.skipped).isEqualTo(ids.size)
-        assertThat(result.migrated).isEqualTo(0)
-        assertThat(result.failed).isEqualTo(0)
+        assertThat(first.migrated).isEqualTo(ids.size)
+        assertThat(first.skipped).isEqualTo(0)
+        assertThat(first.failed).isEqualTo(0)
+
+        val second = activities.migrateBatch(workspaceId, ids)
+
+        assertThat(second.skipped).isEqualTo(ids.size)
+        assertThat(second.migrated).isEqualTo(0)
+        assertThat(second.failed).isEqualTo(0)
     }
 
     @Test

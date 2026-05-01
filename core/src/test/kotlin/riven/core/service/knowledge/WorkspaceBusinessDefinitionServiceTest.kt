@@ -27,7 +27,7 @@ import riven.core.models.request.knowledge.CreateBusinessDefinitionRequest
 import riven.core.models.request.knowledge.UpdateBusinessDefinitionRequest
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
@@ -71,7 +71,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
     private lateinit var glossaryEntityProjector: GlossaryEntityProjector
 
     @MockitoBean
-    private lateinit var entityService: EntityService
+    private lateinit var entityIngestionService: EntityIngestionService
 
     @MockitoBean
     private lateinit var activityService: ActivityService
@@ -112,7 +112,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
 
     @BeforeEach
     fun setup() {
-        reset(glossaryEntityIngestionService, glossaryEntityProjector, entityService, activityService)
+        reset(glossaryEntityIngestionService, glossaryEntityProjector, entityIngestionService, activityService)
     }
 
     // ------ List ------
@@ -166,7 +166,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
     fun `getDefinition delegates to projector via findByIdInternal`() {
         val defId = UUID.randomUUID()
         val entity = EntityFactory.createEntityEntity(id = defId, workspaceId = workspaceId, typeKey = "glossary")
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(entity)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(entity)
         stubProjectionFor(defId)
 
         val result = service.getDefinition(workspaceId, defId)
@@ -178,20 +178,26 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
     @Test
     fun `getDefinition throws NotFoundException when entity is missing`() {
         val defId = UUID.randomUUID()
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(null)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(null)
 
         assertThrows<NotFoundException> {
             service.getDefinition(workspaceId, defId)
         }
     }
 
+    /**
+     * Regression test for r3166515194: requesting a definition with an id that resolves
+     * to a non-glossary entity must surface NotFoundException (mapped to 404), not
+     * IllegalArgumentException (mapped to 400). Returning 400 leaks the existence of
+     * a different entity at the same UUID.
+     */
     @Test
-    fun `getDefinition rejects non-glossary entity types`() {
+    fun `getDefinition rejects non-glossary entity types with NotFoundException`() {
         val defId = UUID.randomUUID()
         val notAGlossary = EntityFactory.createEntityEntity(id = defId, workspaceId = workspaceId, typeKey = "company")
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(notAGlossary)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(notAGlossary)
 
-        assertThrows<IllegalArgumentException> {
+        assertThrows<riven.core.exceptions.NotFoundException> {
             service.getDefinition(workspaceId, defId)
         }
     }
@@ -264,7 +270,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
             id = defId, workspaceId = workspaceId, typeKey = "glossary",
             sourceExternalId = "legacy:abc",
         )
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(existing)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(existing)
         stubProjectionFor(defId)
         whenever(glossaryEntityIngestionService.upsert(any())).thenReturn(existing)
 
@@ -288,7 +294,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
     @Test
     fun `updateDefinition throws NotFoundException when missing`() {
         val defId = UUID.randomUUID()
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(null)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(null)
 
         val request = UpdateBusinessDefinitionRequest(
             term = "x", definition = "x", category = DefinitionCategory.METRIC, version = 0,
@@ -305,7 +311,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
         val existing = EntityFactory.createEntityEntity(
             id = defId, workspaceId = workspaceId, typeKey = "glossary",
         )
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(existing)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(existing)
         // Current normalized term is "retention rate"; new request normalizes to "churn rate".
         stubProjectionFor(defId, normalizedTerm = "retention rate")
         whenever(glossaryEntityProjector.findByNormalizedTerm(workspaceId, "churn rate")).thenReturn(
@@ -332,7 +338,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
         val entity = EntityFactory.createEntityEntity(
             id = defId, workspaceId = workspaceId, typeKey = "glossary",
         )
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(entity)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(entity)
         stubProjectionFor(defId)
 
         service.deleteDefinition(workspaceId, defId)
@@ -343,7 +349,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
     @Test
     fun `deleteDefinition throws NotFoundException for missing entity`() {
         val defId = UUID.randomUUID()
-        whenever(entityService.findByIdInternal(workspaceId, defId)).thenReturn(null)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, defId)).thenReturn(null)
 
         assertThrows<NotFoundException> {
             service.deleteDefinition(workspaceId, defId)

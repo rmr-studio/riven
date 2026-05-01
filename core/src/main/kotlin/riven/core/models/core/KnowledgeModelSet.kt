@@ -1,7 +1,7 @@
 package riven.core.models.core
 
-import riven.core.models.core.models.base.GlossaryTermModel
-import riven.core.models.core.models.base.NoteModel
+import riven.core.models.core.base.GlossaryTermModel
+import riven.core.models.core.base.NoteModel
 
 /**
  * Knowledge-surface entity types. surface_role=KNOWLEDGE on every model.

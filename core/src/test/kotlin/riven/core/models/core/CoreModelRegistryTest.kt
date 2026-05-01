@@ -13,10 +13,10 @@ import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.models.core.models.OrderLineItemModel
 import riven.core.models.core.models.ProductModel
-import riven.core.models.core.models.base.BillingEventBase
-import riven.core.models.core.models.base.ChurnEventBase
-import riven.core.models.core.models.base.CommunicationModel
-import riven.core.models.core.models.base.CustomerBase
+import riven.core.models.core.base.BillingEventBase
+import riven.core.models.core.base.ChurnEventBase
+import riven.core.models.core.base.CommunicationModel
+import riven.core.models.core.base.CustomerBase
 
 
 class CoreModelRegistryTest {

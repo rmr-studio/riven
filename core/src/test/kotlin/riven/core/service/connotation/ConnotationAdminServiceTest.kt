@@ -121,6 +121,7 @@ class ConnotationAdminServiceTest {
     }
 
 
+    @Test
     fun `CLASSIFIER reanalyze throws IllegalArgumentException`() {
         assertThrows<IllegalArgumentException> {
             service.reanalyzeWhereMetadataVersionMismatch(

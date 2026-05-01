@@ -13,14 +13,13 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.entity.entity.RelationshipDefinitionEntity
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.RelationshipTargetKind
 import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.service.entity.type.EntityTypeRelationshipService
 import riven.core.service.util.factory.entity.EntityFactory
 import java.util.Optional
@@ -38,14 +37,14 @@ class AbstractKnowledgeEntityIngestionServiceTest {
     private val labelAttributeId: UUID = UUID.randomUUID()
     private val systemDefinitionId: UUID = UUID.randomUUID()
 
-    private val entityService: EntityService = mock()
+    private val entityIngestionService: EntityIngestionService = mock()
     private val entityTypeRepository: EntityTypeRepository = mock()
     private val entityRepository: EntityRepository = mock()
     private val entityTypeRelationshipService: EntityTypeRelationshipService = mock()
     private val logger: KLogger = mock()
 
     private val service = FakeKnowledgeService(
-        entityService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
+        entityIngestionService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
     )
 
     private fun stubEntityType(): EntityTypeEntity {
@@ -61,7 +60,7 @@ class AbstractKnowledgeEntityIngestionServiceTest {
     }
 
     private fun stubSystemDefinition() {
-        val def = RelationshipDefinitionEntity(
+        val def = EntityFactory.createRelationshipDefinitionEntity(
             id = systemDefinitionId,
             workspaceId = workspaceId,
             sourceEntityTypeId = entityTypeId,
@@ -85,7 +84,7 @@ class AbstractKnowledgeEntityIngestionServiceTest {
             typeKey = "fake",
         )
         whenever(
-            entityService.saveEntityInternal(
+            entityIngestionService.saveEntityInternal(
                 workspaceId = any(),
                 entityTypeId = any(),
                 existingId = anyOrNull(),
@@ -93,7 +92,6 @@ class AbstractKnowledgeEntityIngestionServiceTest {
                 sourceType = any(),
                 sourceIntegrationId = anyOrNull(),
                 sourceExternalId = anyOrNull(),
-                readonly = any(),
             )
         ).thenReturn(saved)
         return saved
@@ -115,7 +113,7 @@ class AbstractKnowledgeEntityIngestionServiceTest {
         val returned = service.upsert(input)
 
         assertThat(returned.id).isEqualTo(saved.id)
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId),
             sourceEntityId = eq(requireNotNull(saved.id)),
             relationshipDefinitionId = eq(systemDefinitionId),
@@ -157,7 +155,7 @@ class AbstractKnowledgeEntityIngestionServiceTest {
         service.upsert(input)
 
         val captor = argumentCaptor<UUID>()
-        verify(entityService).saveEntityInternal(
+        verify(entityIngestionService).saveEntityInternal(
             workspaceId = eq(workspaceId),
             entityTypeId = eq(entityTypeId),
             existingId = captor.capture(),
@@ -165,7 +163,6 @@ class AbstractKnowledgeEntityIngestionServiceTest {
             sourceType = eq(SourceType.INTEGRATION),
             sourceIntegrationId = eq(integrationId),
             sourceExternalId = eq("ext-1"),
-            readonly = eq(false),
         )
         assertThat(captor.firstValue).isEqualTo(existing.id)
         verify(entityRepository).findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalIdIn(
@@ -189,13 +186,13 @@ class AbstractKnowledgeEntityIngestionServiceTest {
     }
 
     private class FakeKnowledgeService(
-        entityService: EntityService,
+        entityIngestionService: EntityIngestionService,
         entityTypeRepository: EntityTypeRepository,
         entityRepository: EntityRepository,
         entityTypeRelationshipService: EntityTypeRelationshipService,
         logger: KLogger,
     ) : AbstractKnowledgeEntityIngestionService<FakeInput>(
-        entityService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
+        entityIngestionService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
     ) {
         override val entityTypeKey: String = "fake"
         override fun buildAttributePayload(entityType: EntityTypeEntity, input: FakeInput): Map<UUID, Any?> =
@@ -212,7 +209,6 @@ class AbstractKnowledgeEntityIngestionServiceTest {
         override val sourceType: SourceType = SourceType.USER_CREATED,
         override val sourceIntegrationId: UUID? = null,
         override val sourceExternalId: String? = null,
-        override val readonly: Boolean = false,
         override val linkSource: SourceType = SourceType.USER_CREATED,
     ) : KnowledgeIngestionInput
 }

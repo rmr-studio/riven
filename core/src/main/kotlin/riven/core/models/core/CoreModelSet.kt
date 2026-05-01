@@ -6,7 +6,7 @@ import riven.core.models.core.models.OrderLineItemModel
 import riven.core.models.core.models.OrderModel
 import riven.core.models.core.models.ProductModel
 import riven.core.models.core.models.SupportTicketModel
-import riven.core.models.core.models.base.CommunicationModel
+import riven.core.models.core.base.CommunicationModel
 import riven.core.models.core.models.dtc.DtcBillingEventModel
 import riven.core.models.core.models.dtc.DtcChurnEventModel
 import riven.core.models.core.models.dtc.DtcCustomerModel

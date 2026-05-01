@@ -584,9 +584,28 @@ class EntityTypeRelationshipService(
         workspaceId: UUID,
         sourceEntityTypeId: UUID,
         systemType: SystemRelationshipType,
+    ): RelationshipDefinitionEntity = getOrCreateSystemDefinitionInternal(workspaceId, sourceEntityTypeId, systemType)
+
+    /**
+     * Internal variant of [getOrCreateSystemDefinition] without @PreAuthorize. Used by
+     * [riven.core.service.catalog.TemplateInstallationService] during onboarding where the JWT
+     * does not yet contain the new workspace's role authorities, and by the reused-entity-type
+     * promotion path where the seeding must be idempotent.
+     */
+    internal fun getOrCreateSystemDefinitionInternal(
+        workspaceId: UUID,
+        sourceEntityTypeId: UUID,
+        systemType: SystemRelationshipType,
     ): RelationshipDefinitionEntity {
         val existing = definitionRepository.findBySourceEntityTypeIdAndSystemType(sourceEntityTypeId, systemType)
-        if (existing.isPresent) return existing.get()
+        if (existing.isPresent) {
+            val def = existing.get()
+            require(def.workspaceId == workspaceId) {
+                "System definition ${def.id} for source $sourceEntityTypeId belongs to workspace " +
+                    "${def.workspaceId} but was requested under workspace $workspaceId"
+            }
+            return def
+        }
 
         return try {
             createSystemDefinitionInternal(workspaceId, sourceEntityTypeId, systemType, userId = null)

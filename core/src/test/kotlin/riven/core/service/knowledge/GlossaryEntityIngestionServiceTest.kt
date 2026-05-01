@@ -10,7 +10,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import riven.core.entity.entity.RelationshipDefinitionEntity
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.RelationshipTargetKind
 import riven.core.enums.entity.SystemRelationshipType
@@ -18,7 +17,7 @@ import riven.core.enums.integration.SourceType
 import riven.core.models.knowledge.AttributeRef
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.service.entity.type.EntityTypeRelationshipService
 import riven.core.service.util.factory.entity.EntityFactory
 import java.util.Optional
@@ -47,14 +46,14 @@ class GlossaryEntityIngestionServiceTest {
     private val definesDefinitionId: UUID = UUID.randomUUID()
     private val mentionDefinitionId: UUID = UUID.randomUUID()
 
-    private val entityService: EntityService = mock()
+    private val entityIngestionService: EntityIngestionService = mock()
     private val entityTypeRepository: EntityTypeRepository = mock()
     private val entityRepository: EntityRepository = mock()
     private val entityTypeRelationshipService: EntityTypeRelationshipService = mock()
     private val logger: KLogger = mock()
 
     private val service = GlossaryEntityIngestionService(
-        entityService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
+        entityIngestionService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
     )
 
     private fun glossaryType() = EntityFactory.createEntityType(
@@ -76,7 +75,7 @@ class GlossaryEntityIngestionServiceTest {
         whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "glossary"))
             .thenReturn(Optional.of(glossaryType()))
 
-        val definesDef = RelationshipDefinitionEntity(
+        val definesDef = EntityFactory.createRelationshipDefinitionEntity(
             id = definesDefinitionId,
             workspaceId = workspaceId,
             sourceEntityTypeId = entityTypeId,
@@ -85,7 +84,7 @@ class GlossaryEntityIngestionServiceTest {
             protected = true,
             systemType = SystemRelationshipType.DEFINES,
         )
-        val mentionDef = RelationshipDefinitionEntity(
+        val mentionDef = EntityFactory.createRelationshipDefinitionEntity(
             id = mentionDefinitionId,
             workspaceId = workspaceId,
             sourceEntityTypeId = entityTypeId,
@@ -109,10 +108,10 @@ class GlossaryEntityIngestionServiceTest {
             id = UUID.randomUUID(), workspaceId = workspaceId, typeId = entityTypeId, typeKey = "glossary",
         )
         whenever(
-            entityService.saveEntityInternal(
+            entityIngestionService.saveEntityInternal(
                 workspaceId = any(), entityTypeId = any(), existingId = anyOrNull(),
                 attributePayload = any(), sourceType = any(), sourceIntegrationId = anyOrNull(),
-                sourceExternalId = anyOrNull(), readonly = any(),
+                sourceExternalId = anyOrNull(),
             )
         ).thenReturn(savedEntity)
 
@@ -139,7 +138,7 @@ class GlossaryEntityIngestionServiceTest {
 
         // Verify attribute payload carries all six glossary fields.
         val payloadCaptor = argumentCaptor<Map<UUID, Any?>>()
-        verify(entityService).saveEntityInternal(
+        verify(entityIngestionService).saveEntityInternal(
             workspaceId = eq(workspaceId),
             entityTypeId = eq(entityTypeId),
             existingId = anyOrNull(),
@@ -147,7 +146,6 @@ class GlossaryEntityIngestionServiceTest {
             sourceType = eq(SourceType.USER_CREATED),
             sourceIntegrationId = anyOrNull(),
             sourceExternalId = eq("legacy:abc"),
-            readonly = eq(false),
         )
         assertThat(payloadCaptor.firstValue.keys).containsExactlyInAnyOrder(
             termAttrId, normalizedTermAttrId, definitionAttrId,
@@ -161,7 +159,7 @@ class GlossaryEntityIngestionServiceTest {
         assertThat(payloadCaptor.firstValue[isCustomisedAttrId]).isEqualTo(false)
 
         // Verify three relationship batches: DEFINES/ENTITY_TYPE, DEFINES/ATTRIBUTE, MENTION/ENTITY.
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId),
             sourceEntityId = eq(requireNotNull(savedEntity.id)),
             relationshipDefinitionId = eq(definesDefinitionId),
@@ -170,7 +168,7 @@ class GlossaryEntityIngestionServiceTest {
             targetKind = eq(RelationshipTargetKind.ENTITY_TYPE),
             targetParentId = eq(null),
         )
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId),
             sourceEntityId = eq(requireNotNull(savedEntity.id)),
             relationshipDefinitionId = eq(definesDefinitionId),
@@ -179,7 +177,7 @@ class GlossaryEntityIngestionServiceTest {
             targetKind = eq(RelationshipTargetKind.ATTRIBUTE),
             targetParentId = eq(typeRefA),
         )
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId),
             sourceEntityId = eq(requireNotNull(savedEntity.id)),
             relationshipDefinitionId = eq(mentionDefinitionId),
@@ -195,12 +193,12 @@ class GlossaryEntityIngestionServiceTest {
         whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "glossary"))
             .thenReturn(Optional.of(glossaryType()))
 
-        val definesDef = RelationshipDefinitionEntity(
+        val definesDef = EntityFactory.createRelationshipDefinitionEntity(
             id = definesDefinitionId, workspaceId = workspaceId, sourceEntityTypeId = entityTypeId,
             name = "Defines", cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
             protected = true, systemType = SystemRelationshipType.DEFINES,
         )
-        val mentionDef = RelationshipDefinitionEntity(
+        val mentionDef = EntityFactory.createRelationshipDefinitionEntity(
             id = mentionDefinitionId, workspaceId = workspaceId, sourceEntityTypeId = entityTypeId,
             name = "Mentions", cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
             protected = true, systemType = SystemRelationshipType.MENTION,
@@ -213,10 +211,10 @@ class GlossaryEntityIngestionServiceTest {
         ).thenReturn(mentionDef)
 
         whenever(
-            entityService.saveEntityInternal(
+            entityIngestionService.saveEntityInternal(
                 workspaceId = any(), entityTypeId = any(), existingId = anyOrNull(),
                 attributePayload = any(), sourceType = any(), sourceIntegrationId = anyOrNull(),
-                sourceExternalId = anyOrNull(), readonly = any(),
+                sourceExternalId = anyOrNull(),
             )
         ).thenReturn(
             EntityFactory.createEntityEntity(
@@ -239,7 +237,7 @@ class GlossaryEntityIngestionServiceTest {
 
         // ENTITY_TYPE + ATTRIBUTE batches still get invoked (with empty sets) so that prior
         // refs are reconciled away on update.
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId), sourceEntityId = any(),
             relationshipDefinitionId = eq(definesDefinitionId),
             targetIds = eq(emptySet()),
@@ -247,7 +245,7 @@ class GlossaryEntityIngestionServiceTest {
             targetKind = eq(RelationshipTargetKind.ENTITY_TYPE),
             targetParentId = eq(null),
         )
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId), sourceEntityId = any(),
             relationshipDefinitionId = eq(definesDefinitionId),
             targetIds = eq(emptySet()),
@@ -255,7 +253,7 @@ class GlossaryEntityIngestionServiceTest {
             targetKind = eq(RelationshipTargetKind.ATTRIBUTE),
             targetParentId = eq(null),
         )
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId), sourceEntityId = any(),
             relationshipDefinitionId = eq(mentionDefinitionId),
             targetIds = eq(emptySet()),

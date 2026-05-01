@@ -13,6 +13,7 @@ import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.enums.core.DynamicDefaultFunction
 import riven.core.enums.entity.SystemRelationshipType
+import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.models.common.validation.DefaultValue
 import riven.core.enums.integration.SourceType
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
@@ -144,6 +145,17 @@ class TemplateInstallationService(
                 sourceManifestId = catalogType.manifestId,
                 sourceSchemaHash = catalogType.schemaHash,
             )
+            // Backfill any system edges that the existing entity type may be missing.
+            // getOrCreateSystemDefinition (invoked by seedKnowledgeRelationships ->
+            // createSystemDefinitionInternal) is idempotent on the unique
+            // (workspace_id, source_entity_type_id, system_type) constraint, so re-running
+            // is a no-op when the row already exists.
+            //
+            // Role is intentionally not overwritten on reuse: a workspace user may have
+            // customised the role on an existing entity type, and the template should
+            // not silently revert that. Lifecycle domain / source manifest are aligned
+            // by promoteToTemplate above; everything else is left as-is.
+            seedKnowledgeRelationships(workspaceId, catalogType.key, result.entityTypeId)
             logger.info { "Promoted reused entity type '$key' (${result.entityTypeId}) to template" }
         }
     }
@@ -285,15 +297,16 @@ class TemplateInstallationService(
      * Adding a new KNOWLEDGE type means adding one entry here; the seeding
      * loop is otherwise type-agnostic.
      */
-    private val knowledgeSystemEdges: Map<String, List<SystemRelationshipType>> = mapOf(
-        "note" to listOf(SystemRelationshipType.ATTACHMENT, SystemRelationshipType.MENTION),
-        "glossary" to listOf(SystemRelationshipType.DEFINES, SystemRelationshipType.MENTION),
+    private val knowledgeSystemEdges: Map<KnowledgeEntityTypeKey, List<SystemRelationshipType>> = mapOf(
+        KnowledgeEntityTypeKey.NOTE to listOf(SystemRelationshipType.ATTACHMENT, SystemRelationshipType.MENTION),
+        KnowledgeEntityTypeKey.GLOSSARY to listOf(SystemRelationshipType.DEFINES, SystemRelationshipType.MENTION),
     )
 
     private fun seedKnowledgeRelationships(workspaceId: UUID, key: String, entityTypeId: UUID) {
-        val edges = knowledgeSystemEdges[key] ?: return
+        val knowledgeKey = KnowledgeEntityTypeKey.fromKey(key) ?: return
+        val edges = knowledgeSystemEdges[knowledgeKey] ?: return
         edges.forEach { edge ->
-            relationshipService.createSystemDefinitionInternal(workspaceId, entityTypeId, edge)
+            relationshipService.getOrCreateSystemDefinitionInternal(workspaceId, entityTypeId, edge)
         }
     }
 

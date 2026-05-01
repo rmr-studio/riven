@@ -10,14 +10,13 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import riven.core.entity.entity.RelationshipDefinitionEntity
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.RelationshipTargetKind
 import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.service.entity.type.EntityTypeRelationshipService
 import riven.core.service.util.factory.entity.EntityFactory
 import java.util.Optional
@@ -37,14 +36,14 @@ class NoteEntityIngestionServiceTest {
     private val plaintextAttrId: UUID = UUID.randomUUID()
     private val systemDefinitionId: UUID = UUID.randomUUID()
 
-    private val entityService: EntityService = mock()
+    private val entityIngestionService: EntityIngestionService = mock()
     private val entityTypeRepository: EntityTypeRepository = mock()
     private val entityRepository: EntityRepository = mock()
     private val entityTypeRelationshipService: EntityTypeRelationshipService = mock()
     private val logger: KLogger = mock()
 
     private val service = NoteEntityIngestionService(
-        entityService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
+        entityIngestionService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
     )
 
     @Test
@@ -62,7 +61,7 @@ class NoteEntityIngestionServiceTest {
         whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "note"))
             .thenReturn(Optional.of(noteType))
 
-        val def = RelationshipDefinitionEntity(
+        val def = EntityFactory.createRelationshipDefinitionEntity(
             id = systemDefinitionId,
             workspaceId = workspaceId,
             sourceEntityTypeId = entityTypeId,
@@ -81,10 +80,10 @@ class NoteEntityIngestionServiceTest {
             id = UUID.randomUUID(), workspaceId = workspaceId, typeId = entityTypeId, typeKey = "note",
         )
         whenever(
-            entityService.saveEntityInternal(
+            entityIngestionService.saveEntityInternal(
                 workspaceId = any(), entityTypeId = any(), existingId = anyOrNull(),
                 attributePayload = any(), sourceType = any(), sourceIntegrationId = anyOrNull(),
-                sourceExternalId = anyOrNull(), readonly = any(),
+                sourceExternalId = anyOrNull(),
             )
         ).thenReturn(savedEntity)
 
@@ -102,7 +101,7 @@ class NoteEntityIngestionServiceTest {
 
         assertThat(saved.id).isEqualTo(savedEntity.id)
         val payloadCaptor = argumentCaptor<Map<UUID, Any?>>()
-        verify(entityService).saveEntityInternal(
+        verify(entityIngestionService).saveEntityInternal(
             workspaceId = eq(workspaceId),
             entityTypeId = eq(entityTypeId),
             existingId = anyOrNull(),
@@ -110,7 +109,6 @@ class NoteEntityIngestionServiceTest {
             sourceType = eq(SourceType.USER_CREATED),
             sourceIntegrationId = anyOrNull(),
             sourceExternalId = anyOrNull(),
-            readonly = eq(false),
         )
         assertThat(payloadCaptor.firstValue.keys).containsExactlyInAnyOrder(
             titleAttrId, contentAttrId, plaintextAttrId,
@@ -118,7 +116,7 @@ class NoteEntityIngestionServiceTest {
         assertThat(payloadCaptor.firstValue[titleAttrId]).isEqualTo("Status Update")
         assertThat(payloadCaptor.firstValue[plaintextAttrId]).isEqualTo("Status Update")
 
-        verify(entityService).replaceRelationshipsInternal(
+        verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId),
             sourceEntityId = eq(requireNotNull(savedEntity.id)),
             relationshipDefinitionId = eq(systemDefinitionId),

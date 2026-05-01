@@ -1,11 +1,14 @@
 package riven.core.service.note
 
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
+import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.enums.note.NoteSourceType
+import riven.core.exceptions.NotFoundException
 import riven.core.models.note.Note
 import riven.core.models.note.NoteEntityContext
 import riven.core.models.note.WorkspaceNote
@@ -45,6 +48,7 @@ class NoteEntityProjector(
     // ------ Public read operations ------
 
     /** Project a single note entity into a [Note] (with attached entity ids). */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun projectNote(workspaceId: UUID, noteEntity: EntityEntity): Note {
         val noteType = resolveNoteType(workspaceId)
         val targetIds = attachedEntityIds(noteEntity)
@@ -52,6 +56,7 @@ class NoteEntityProjector(
     }
 
     /** Project a single note entity into a [WorkspaceNote] (with entity context). */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun projectWorkspaceNote(workspaceId: UUID, noteEntity: EntityEntity): WorkspaceNote {
         val noteType = resolveNoteType(workspaceId)
         val targetIds = attachedEntityIds(noteEntity)
@@ -64,6 +69,7 @@ class NoteEntityProjector(
      * its attached entity contexts. Cursor pagination uses the existing
      * (createdAt, id) keyset to maintain stable ordering.
      */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun listNotes(
         workspaceId: UUID,
         search: String?,
@@ -72,10 +78,11 @@ class NoteEntityProjector(
     ): CursorPage<WorkspaceNote> {
         require(limit in 1..100) { "limit must be between 1 and 100" }
 
-        val all = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, "note")
+        val noteType = resolveNoteType(workspaceId)
+        val all = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, KnowledgeEntityTypeKey.NOTE.key)
         val filtered = if (!search.isNullOrBlank()) {
             val term = search.lowercase()
-            all.filter { matchesPlaintext(it, term) }
+            all.filter { matchesPlaintext(it, noteType, term) }
         } else all
 
         val (cursorCreatedAt, cursorId) = CursorPagination.decodeCursor(cursor)
@@ -87,7 +94,6 @@ class NoteEntityProjector(
             }
             .take(limit)
 
-        val noteType = resolveNoteType(workspaceId)
         val attachmentsByNoteId = batchAttachmentsBySource(paged.mapNotNull { it.id })
         val allTargetIds = attachmentsByNoteId.values.flatten().toSet()
         val contextMap = if (allTargetIds.isEmpty()) emptyMap() else buildEntityContextMap(workspaceId, allTargetIds)
@@ -114,6 +120,7 @@ class NoteEntityProjector(
      * List notes attached to a single entity (inverse `ATTACHMENT` lookup).
      * Each result is projected into a [Note] (no `entityContexts`).
      */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getNotesForEntity(workspaceId: UUID, entityId: UUID, search: String?): List<Note> {
         val attachments = entityRelationshipRepository.findByTargetIdAndDefinitionSystemType(
             entityId, SystemRelationshipType.ATTACHMENT,
@@ -122,7 +129,7 @@ class NoteEntityProjector(
 
         val noteIds = attachments.map { it.sourceId }.toSet()
         val noteEntities = entityRepository.findAllById(noteIds)
-            .filter { it.workspaceId == workspaceId && it.typeKey == "note" }
+            .filter { it.workspaceId == workspaceId && it.typeKey == KnowledgeEntityTypeKey.NOTE.key }
 
         val noteType = resolveNoteType(workspaceId)
         val attachmentsByNoteId = batchAttachmentsBySource(noteEntities.mapNotNull { it.id })
@@ -141,8 +148,8 @@ class NoteEntityProjector(
     // ------ Private helpers ------
 
     private fun resolveNoteType(workspaceId: UUID): EntityTypeEntity =
-        entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "note").orElseThrow {
-            IllegalStateException("note entity type missing for workspace $workspaceId — onboarding incomplete")
+        entityTypeRepository.findByworkspaceIdAndKey(workspaceId, KnowledgeEntityTypeKey.NOTE.key).orElseThrow {
+            NotFoundException("note entity type missing for workspace $workspaceId — onboarding incomplete")
         }
 
     private fun attachedEntityIds(noteEntity: EntityEntity): List<UUID> {
@@ -280,9 +287,8 @@ class NoteEntityProjector(
      * TODO(Phase F): replace with a persisted `entities.search_vector` or per-attribute FTS index
      * once the legacy `notes` table is dropped and we no longer rely on its `search_vector`.
      */
-    private fun matchesPlaintext(entity: EntityEntity, lowercaseTerm: String): Boolean {
+    private fun matchesPlaintext(entity: EntityEntity, noteType: EntityTypeEntity, lowercaseTerm: String): Boolean {
         val id = entity.id ?: return false
-        val noteType = entityTypeRepository.findById(entity.typeId).orElse(null) ?: return false
         val mapping = noteType.attributeKeyMapping ?: return false
         val plaintextId = mapping["plaintext"]?.let(UUID::fromString) ?: return false
         val titleId = mapping["title"]?.let(UUID::fromString)

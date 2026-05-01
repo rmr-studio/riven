@@ -15,8 +15,16 @@ interface KnowledgeIngestionInput {
     val sourceType: SourceType
     val sourceIntegrationId: UUID?
     val sourceExternalId: String?
-    val readonly: Boolean
     val linkSource: SourceType
+
+    /**
+     * Caller-provided entity id to update in place. When set, the upsert path uses it
+     * directly and skips [sourceExternalId]-based lookup. Required for USER_CREATED
+     * inputs where `sourceExternalId` is null and the abstract idempotency keys can
+     * therefore not resolve an existing row.
+     */
+    val existingId: UUID?
+        get() = null
 }
 
 /**
@@ -40,4 +48,21 @@ data class KnowledgeRelationshipBatch(
     val targetIds: Set<UUID>,
     val targetKind: RelationshipTargetKind = RelationshipTargetKind.ENTITY,
     val targetParentId: UUID? = null,
-)
+) {
+    init {
+        val parentRequired = targetKind == RelationshipTargetKind.ATTRIBUTE ||
+            targetKind == RelationshipTargetKind.RELATIONSHIP
+        if (parentRequired && targetIds.isNotEmpty()) {
+            require(targetParentId != null) {
+                "targetParentId must be non-null when emitting ATTRIBUTE/RELATIONSHIP rows " +
+                    "(got targetKind=$targetKind)"
+            }
+        }
+        if (!parentRequired) {
+            require(targetParentId == null) {
+                "targetParentId must be null for ENTITY/ENTITY_TYPE target kinds " +
+                    "(got targetKind=$targetKind, targetParentId=$targetParentId)"
+            }
+        }
+    }
+}

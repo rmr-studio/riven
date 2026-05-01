@@ -6,10 +6,11 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.entity.RelationshipTargetKind
 import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
+import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.models.knowledge.AttributeRef
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.util.UUID
 
@@ -23,16 +24,16 @@ import java.util.UUID
  */
 @Service
 class GlossaryEntityIngestionService(
-    entityService: EntityService,
+    entityIngestionService: EntityIngestionService,
     entityTypeRepository: EntityTypeRepository,
     entityRepository: EntityRepository,
     entityTypeRelationshipService: EntityTypeRelationshipService,
     logger: KLogger,
 ) : AbstractKnowledgeEntityIngestionService<GlossaryEntityIngestionService.GlossaryIngestionInput>(
-    entityService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
+    entityIngestionService, entityTypeRepository, entityRepository, entityTypeRelationshipService, logger,
 ) {
 
-    override val entityTypeKey: String = "glossary"
+    override val entityTypeKey: String = KnowledgeEntityTypeKey.GLOSSARY.key
 
     /**
      * Glossary term ingestion input. `entityTypeRefs` and `attributeRefs` both produce
@@ -54,7 +55,6 @@ class GlossaryEntityIngestionService(
         val mentionedEntityIds: Set<UUID> = emptySet(),
         override val sourceType: SourceType = SourceType.USER_CREATED,
         override val sourceIntegrationId: UUID? = null,
-        override val readonly: Boolean = false,
         override val linkSource: SourceType = SourceType.USER_CREATED,
     ) : KnowledgeIngestionInput
 

@@ -23,7 +23,7 @@ import riven.core.models.note.UpdateNoteRequest
 import riven.core.models.note.WorkspaceNote
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.factory.entity.EntityFactory
@@ -44,7 +44,7 @@ import java.util.UUID
 class NoteServiceTest : BaseServiceTest() {
 
     @MockitoBean
-    private lateinit var entityService: EntityService
+    private lateinit var entityIngestionService: EntityIngestionService
 
     @MockitoBean
     private lateinit var noteEntityIngestionService: NoteEntityIngestionService
@@ -117,7 +117,7 @@ class NoteServiceTest : BaseServiceTest() {
             typeKey = "note",
             sourceType = SourceType.INTEGRATION,
         )
-        whenever(entityService.findByIdInternal(workspaceId, noteId)).thenReturn(readonlyEntity)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, noteId)).thenReturn(readonlyEntity)
 
         assertThrows<AccessDeniedException> {
             noteService.updateNote(workspaceId, noteId, UpdateNoteRequest(title = "x"))
@@ -128,7 +128,7 @@ class NoteServiceTest : BaseServiceTest() {
     @Test
     fun `updateNote — missing entity throws NotFoundException`() {
         val noteId = UUID.randomUUID()
-        whenever(entityService.findByIdInternal(workspaceId, noteId)).thenReturn(null)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, noteId)).thenReturn(null)
 
         assertThrows<NotFoundException> {
             noteService.updateNote(workspaceId, noteId, UpdateNoteRequest(title = "x"))
@@ -141,7 +141,7 @@ class NoteServiceTest : BaseServiceTest() {
         val entity = EntityFactory.createEntityEntity(
             id = noteId, workspaceId = workspaceId, typeKey = "note",
         )
-        whenever(entityService.findByIdInternal(workspaceId, noteId)).thenReturn(entity)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, noteId)).thenReturn(entity)
         stubProjectorReturns(noteId, "stub", emptyList())
 
         noteService.deleteNote(workspaceId, noteId)
@@ -158,7 +158,7 @@ class NoteServiceTest : BaseServiceTest() {
             typeKey = "note",
             sourceType = SourceType.INTEGRATION,
         )
-        whenever(entityService.findByIdInternal(workspaceId, noteId)).thenReturn(readonly)
+        whenever(entityIngestionService.findByIdInternal(workspaceId, noteId)).thenReturn(readonly)
 
         assertThrows<AccessDeniedException> {
             noteService.deleteNote(workspaceId, noteId)

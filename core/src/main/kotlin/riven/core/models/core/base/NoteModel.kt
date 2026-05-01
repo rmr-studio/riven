@@ -1,4 +1,4 @@
-package riven.core.models.core.models.base
+package riven.core.models.core.base
 
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
@@ -43,7 +43,7 @@ object NoteModel : CoreModelDefinition(
             ),
         ),
         "content" to CoreModelAttribute(
-            schemaType = SchemaType.OBJECT, label = "Content", dataType = DataType.ARRAY,
+            schemaType = SchemaType.ARRAY, label = "Content", dataType = DataType.ARRAY,
             semantics = AttributeSemantics(
                 definition = "BlockNote document tree (array of block objects) preserved verbatim.",
                 classification = SemanticAttributeClassification.FREETEXT,

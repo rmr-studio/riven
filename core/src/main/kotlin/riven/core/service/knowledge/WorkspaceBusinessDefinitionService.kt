@@ -9,6 +9,7 @@ import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.integration.SourceType
 import riven.core.enums.knowledge.DefinitionCategory
 import riven.core.enums.knowledge.DefinitionStatus
+import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.ConflictException
 import riven.core.exceptions.NotFoundException
@@ -18,7 +19,7 @@ import riven.core.models.request.knowledge.UpdateBusinessDefinitionRequest
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityService
+import riven.core.service.entity.EntityIngestionService
 import riven.core.util.TermNormalizationUtil
 import java.util.UUID
 
@@ -42,7 +43,7 @@ import java.util.UUID
 class WorkspaceBusinessDefinitionService(
     private val glossaryEntityIngestionService: GlossaryEntityIngestionService,
     private val glossaryEntityProjector: GlossaryEntityProjector,
-    private val entityService: EntityService,
+    private val entityIngestionService: EntityIngestionService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
     private val logger: KLogger,
@@ -75,10 +76,10 @@ class WorkspaceBusinessDefinitionService(
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional(readOnly = true)
     fun getDefinition(workspaceId: UUID, id: UUID): WorkspaceBusinessDefinition {
-        val entity = entityService.findByIdInternal(workspaceId, id)
+        val entity = entityIngestionService.findByIdInternal(workspaceId, id)
             ?: throw NotFoundException("Business definition not found: $id")
-        require(entity.typeKey == "glossary") {
-            "Entity $id is not a glossary term (typeKey=${entity.typeKey})"
+        if (entity.typeKey != KnowledgeEntityTypeKey.GLOSSARY.key) {
+            throw NotFoundException("Business definition not found: $id")
         }
         return glossaryEntityProjector.project(workspaceId, entity)
     }
@@ -248,10 +249,10 @@ class WorkspaceBusinessDefinitionService(
     }
 
     private fun requireGlossaryEntity(workspaceId: UUID, id: UUID): riven.core.entity.entity.EntityEntity {
-        val entity = entityService.findByIdInternal(workspaceId, id)
+        val entity = entityIngestionService.findByIdInternal(workspaceId, id)
             ?: throw NotFoundException("Business definition not found: $id")
-        require(entity.typeKey == "glossary") {
-            "Entity $id is not a glossary term (typeKey=${entity.typeKey})"
+        if (entity.typeKey != KnowledgeEntityTypeKey.GLOSSARY.key) {
+            throw NotFoundException("Business definition not found: $id")
         }
         return entity
     }

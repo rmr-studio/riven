@@ -6,7 +6,7 @@ import riven.core.enums.entity.EntityTypeRole
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.models.core.ProjectionAcceptRule
-import riven.core.models.core.models.base.CustomerBase
+import riven.core.models.core.base.CustomerBase
 
 /**
  * DTC Customer — the central entity in the direct-to-consumer ecommerce lifecycle.

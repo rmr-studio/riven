@@ -113,7 +113,6 @@ class NoteBackfillActivitiesImpl(
                 sourceType = note.sourceType.toEntitySourceType(),
                 sourceIntegrationId = note.sourceIntegrationId,
                 sourceExternalId = note.sourceExternalId ?: "legacy:${requireNotNull(note.id)}",
-                readonly = note.readonly,
                 linkSource = note.sourceType.toEntitySourceType(),
             ),
         )

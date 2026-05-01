@@ -1,4 +1,4 @@
-package riven.core.models.core.models.base
+package riven.core.models.core.base
 
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
@@ -8,6 +8,8 @@ import riven.core.enums.entity.EntityTypeRole
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.knowledge.DefinitionCategory
+import riven.core.enums.knowledge.DefinitionSource
 import riven.core.models.common.validation.SchemaOptions
 import riven.core.models.core.AttributeSemantics
 import riven.core.models.core.CoreModelAttribute
@@ -60,7 +62,7 @@ object GlossaryTermModel : CoreModelDefinition(
         ),
         "category" to CoreModelAttribute(
             schemaType = SchemaType.SELECT, label = "Category", dataType = DataType.STRING,
-            options = SchemaOptions(enum = listOf("BUSINESS", "TECHNICAL", "PRODUCT", "OPERATIONAL", "OTHER")),
+            options = SchemaOptions(enum = DefinitionCategory.entries.map { it.name }),
             semantics = AttributeSemantics(
                 definition = "Coarse classification used for filtering the glossary panel.",
                 classification = SemanticAttributeClassification.CATEGORICAL,
@@ -69,7 +71,7 @@ object GlossaryTermModel : CoreModelDefinition(
         ),
         "source" to CoreModelAttribute(
             schemaType = SchemaType.SELECT, label = "Source", dataType = DataType.STRING,
-            options = SchemaOptions(enum = listOf("MANUAL", "ONBOARDING", "INTEGRATION")),
+            options = SchemaOptions(enum = DefinitionSource.entries.map { it.name }),
             semantics = AttributeSemantics(
                 definition = "Where the term originated.",
                 classification = SemanticAttributeClassification.CATEGORICAL,

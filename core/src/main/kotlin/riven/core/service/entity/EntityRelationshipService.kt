@@ -159,13 +159,20 @@ class EntityRelationshipService(
 
         val existing = entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceId, definitionId)
             .filter { it.targetKind == targetKind }
+            .filter { !parentRequired || it.targetParentId == targetParentId }
         val existingTargetIds = existing.map { it.targetId }.toSet()
 
         val toRemove = existingTargetIds - targetIds
         if (toRemove.isNotEmpty()) {
-            entityRelationshipRepository.deleteAllBySourceIdAndDefinitionIdAndTargetKindAndTargetIdIn(
-                sourceId, definitionId, targetKind, toRemove,
-            )
+            if (parentRequired) {
+                entityRelationshipRepository.deleteAllBySourceIdAndDefinitionIdAndTargetKindAndTargetParentIdAndTargetIdIn(
+                    sourceId, definitionId, targetKind, requireNotNull(targetParentId), toRemove,
+                )
+            } else {
+                entityRelationshipRepository.deleteAllBySourceIdAndDefinitionIdAndTargetKindAndTargetIdIn(
+                    sourceId, definitionId, targetKind, toRemove,
+                )
+            }
         }
 
         val toAdd = targetIds - existingTargetIds
