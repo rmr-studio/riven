@@ -133,7 +133,7 @@ class EntityRelationshipService(
      * ENTITY / ENTITY_TYPE.
      */
     @Transactional
-    fun replaceForDefinition(
+    internal fun replaceForDefinitionInternal(
         workspaceId: UUID,
         sourceId: UUID,
         definitionId: UUID,
@@ -144,9 +144,9 @@ class EntityRelationshipService(
     ) {
         val parentRequired = targetKind == RelationshipTargetKind.ATTRIBUTE ||
             targetKind == RelationshipTargetKind.RELATIONSHIP
-        if (parentRequired && targetIds.isNotEmpty()) {
+        if (parentRequired) {
             require(targetParentId != null) {
-                "targetParentId must be non-null when inserting ATTRIBUTE/RELATIONSHIP rows " +
+                "targetParentId must be non-null for ATTRIBUTE/RELATIONSHIP reconciliation " +
                     "(got targetKind=$targetKind)"
             }
         }
@@ -190,6 +190,23 @@ class EntityRelationshipService(
             )
         }
         entityRelationshipRepository.saveAll(newRelationships)
+    }
+
+    /**
+     * Hard-delete every relationship row matching `(sourceId, definitionId, targetKind)` for
+     * the given source. Used by the knowledge ingestion path to reconcile parent-scoped kinds
+     * (ATTRIBUTE / RELATIONSHIP) when the input carries no refs of that kind, since
+     * [replaceForDefinitionInternal] requires a non-null `targetParentId` for those kinds.
+     */
+    @Transactional
+    fun clearAllOfKindForDefinition(
+        sourceId: UUID,
+        definitionId: UUID,
+        targetKind: RelationshipTargetKind,
+    ) {
+        entityRelationshipRepository.deleteAllBySourceIdAndDefinitionIdAndTargetKind(
+            sourceId, definitionId, targetKind,
+        )
     }
 
     // ------ Read ------

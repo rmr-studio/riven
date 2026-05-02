@@ -80,27 +80,11 @@ class EntityIngestionService(
         sourceIntegrationId: UUID? = null,
         sourceExternalId: String? = null,
     ): EntityEntity {
-        val type: EntityTypeEntity = entityTypeService.getById(entityTypeId)
-        val typeId = requireNotNull(type.id) { "Entity type ID cannot be null" }
+        val (type, typeId) = resolveAndAuthorizeType(workspaceId, entityTypeId)
+        val prev = loadPreviousEntity(existingId, workspaceId, entityTypeId)
+        val previousAttributes = prev?.let { entityAttributeService.getAttributes(requireNotNull(it.id)) } ?: emptyMap()
 
-        val prev: EntityEntity? = existingId?.let { findOrThrow { entityRepository.findById(it) } }
-        prev?.run {
-            require(this.workspaceId == workspaceId) { "Entity does not belong to the specified workspace" }
-            require(this.typeId == entityTypeId) { "Entity type cannot be changed" }
-        }
-
-        val previousAttributes = if (prev != null) entityAttributeService.getAttributes(requireNotNull(prev.id)) else emptyMap()
-
-        // Wrap raw values into EntityAttributePrimitivePayload using each attribute's declared schemaType.
-        val primitivePayload: Map<UUID, EntityAttributePrimitivePayload> = attributePayload
-            .mapNotNull { (attrId, raw) ->
-                if (raw == null) return@mapNotNull null
-                val schemaKey = type.schema.properties?.get(attrId)?.key
-                    ?: error("Attribute $attrId not found in schema for entity type ${type.key}")
-                attrId to EntityAttributePrimitivePayload(value = raw, schemaType = schemaKey)
-            }
-            .toMap()
-
+        val primitivePayload = wrapPayload(type, attributePayload)
         val enrichedPayload = injectDefaultsAndGenerateIds(
             attributePayload = primitivePayload,
             schema = type.schema,
@@ -109,31 +93,7 @@ class EntityIngestionService(
             previousAttributes = previousAttributes,
         )
 
-        val entity = if (prev != null) {
-            prev.copy(
-                sourceType = sourceType,
-                sourceIntegrationId = sourceIntegrationId,
-                sourceExternalId = sourceExternalId,
-            )
-        } else {
-            EntityEntity(
-                workspaceId = workspaceId,
-                typeId = entityTypeId,
-                typeKey = type.key,
-                identifierKey = type.identifierKey,
-                iconType = type.iconType,
-                iconColour = type.iconColour,
-                sourceType = sourceType,
-                sourceIntegrationId = sourceIntegrationId,
-                sourceExternalId = sourceExternalId,
-            )
-        }
-
-        // Readonly state is derived from sourceType (specifically SourceType.INTEGRATION),
-        // not stored as a separate column on entities. Callers that previously passed a
-        // `readonly` flag should set sourceType=INTEGRATION instead — that is the single
-        // source of truth checked by NoteEntityProjector / NoteService /
-        // GlossaryEntityProjector when deciding whether mutations are allowed.
+        val entity = buildEntity(prev, type, workspaceId, entityTypeId, sourceType, sourceIntegrationId, sourceExternalId)
 
         entityValidationService.validateEntity(
             entity,
@@ -157,28 +117,7 @@ class EntityIngestionService(
             attributes = enrichedPayload,
         )
 
-        // Unique-value enforcement (mirrors EntityService.saveEntity).
-        val uniqueValuesToSave = enrichedPayload
-            .filterValues { it.value != null }
-            .mapNotNull { (fieldId, payload) ->
-                val schemaProp = type.schema.properties?.get(fieldId) ?: return@mapNotNull null
-                if (!schemaProp.unique) return@mapNotNull null
-                entityTypeAttributeService.checkAttributeUniqueness(
-                    typeId = typeId,
-                    fieldId = fieldId,
-                    value = payload.value,
-                    excludeEntityId = savedId,
-                )
-                fieldId to payload.value.toString()
-            }
-            .toMap()
-
-        entityTypeAttributeService.saveUniqueValues(
-            workspaceId = workspaceId,
-            entityId = savedId,
-            typeId = typeId,
-            uniqueValues = uniqueValuesToSave,
-        )
+        enforceUniqueValues(type, savedId, workspaceId, typeId, enrichedPayload)
 
         logger.debug { "saveEntityInternal saved entity $savedId in workspace $workspaceId (type=${type.key})" }
         return saved
@@ -223,7 +162,7 @@ class EntityIngestionService(
         targetKind: RelationshipTargetKind = RelationshipTargetKind.ENTITY,
         targetParentId: UUID? = null,
     ) {
-        entityRelationshipService.replaceForDefinition(
+        entityRelationshipService.replaceForDefinitionInternal(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             definitionId = relationshipDefinitionId,
@@ -231,6 +170,26 @@ class EntityIngestionService(
             linkSource = linkSource,
             targetKind = targetKind,
             targetParentId = targetParentId,
+        )
+    }
+
+    /**
+     * System-driven clear-all-of-kind reconciliation. Used by knowledge ingestion when the
+     * input carries no refs for a parent-scoped kind (ATTRIBUTE / RELATIONSHIP) — in that case
+     * [replaceRelationshipsInternal] cannot run because it requires a non-null `targetParentId`,
+     * so callers route through this method to drop every existing row of the kind regardless
+     * of parent.
+     */
+    @Transactional
+    fun clearRelationshipsByKindInternal(
+        sourceEntityId: UUID,
+        relationshipDefinitionId: UUID,
+        targetKind: RelationshipTargetKind,
+    ) {
+        entityRelationshipService.clearAllOfKindForDefinition(
+            sourceId = sourceEntityId,
+            definitionId = relationshipDefinitionId,
+            targetKind = targetKind,
         )
     }
 
@@ -252,6 +211,108 @@ class EntityIngestionService(
         entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, typeKey)
 
     // ------ Private helpers ------
+
+    /**
+     * Resolves the entity type and asserts it belongs to the requested workspace. Closes the
+     * cross-tenant attachment gap on this system-bus entry point — without this guard a caller
+     * could attach a foreign-workspace entity type to a workspace entity.
+     */
+    private fun resolveAndAuthorizeType(workspaceId: UUID, entityTypeId: UUID): Pair<EntityTypeEntity, UUID> {
+        val type = entityTypeService.getById(entityTypeId)
+        require(type.workspaceId == workspaceId) { "Entity type $entityTypeId not found in workspace $workspaceId" }
+        val typeId = requireNotNull(type.id) { "Entity type ID cannot be null" }
+        return type to typeId
+    }
+
+    private fun loadPreviousEntity(existingId: UUID?, workspaceId: UUID, entityTypeId: UUID): EntityEntity? {
+        if (existingId == null) return null
+        val prev = findOrThrow { entityRepository.findById(existingId) }
+        require(prev.workspaceId == workspaceId) { "Entity does not belong to the specified workspace" }
+        require(prev.typeId == entityTypeId) { "Entity type cannot be changed" }
+        return prev
+    }
+
+    /**
+     * Wraps raw attribute values into [EntityAttributePrimitivePayload] using each attribute's
+     * declared schemaType. Skips null values.
+     */
+    private fun wrapPayload(
+        type: EntityTypeEntity,
+        attributePayload: Map<UUID, Any?>,
+    ): Map<UUID, EntityAttributePrimitivePayload> = attributePayload
+        .mapNotNull { (attrId, raw) ->
+            if (raw == null) return@mapNotNull null
+            val schemaKey = type.schema.properties?.get(attrId)?.key
+                ?: error("Attribute $attrId not found in schema for entity type ${type.key}")
+            attrId to EntityAttributePrimitivePayload(value = raw, schemaType = schemaKey)
+        }
+        .toMap()
+
+    /**
+     * Builds the [EntityEntity] for upsert. Update path copies provenance fields onto the
+     * existing row; create path constructs a fresh entity stamped with the type's identifiers.
+     *
+     * Readonly state is derived from sourceType (specifically [SourceType.INTEGRATION]) rather
+     * than stored as a separate column — single source of truth checked by NoteEntityProjector,
+     * NoteService, and GlossaryEntityProjector when deciding whether mutations are allowed.
+     */
+    private fun buildEntity(
+        prev: EntityEntity?,
+        type: EntityTypeEntity,
+        workspaceId: UUID,
+        entityTypeId: UUID,
+        sourceType: SourceType,
+        sourceIntegrationId: UUID?,
+        sourceExternalId: String?,
+    ): EntityEntity = prev?.copy(
+        sourceType = sourceType,
+        sourceIntegrationId = sourceIntegrationId,
+        sourceExternalId = sourceExternalId,
+    ) ?: EntityEntity(
+        workspaceId = workspaceId,
+        typeId = entityTypeId,
+        typeKey = type.key,
+        identifierKey = type.identifierKey,
+        iconType = type.iconType,
+        iconColour = type.iconColour,
+        sourceType = sourceType,
+        sourceIntegrationId = sourceIntegrationId,
+        sourceExternalId = sourceExternalId,
+    )
+
+    /**
+     * Enforces unique-value constraints on attributes flagged unique in the schema. Mirrors
+     * the equivalent step in [EntityService.saveEntity].
+     */
+    private fun enforceUniqueValues(
+        type: EntityTypeEntity,
+        savedId: UUID,
+        workspaceId: UUID,
+        typeId: UUID,
+        enrichedPayload: Map<UUID, EntityAttributePrimitivePayload>,
+    ) {
+        val uniqueValuesToSave = enrichedPayload
+            .filterValues { it.value != null }
+            .mapNotNull { (fieldId, payload) ->
+                val schemaProp = type.schema.properties?.get(fieldId) ?: return@mapNotNull null
+                if (!schemaProp.unique) return@mapNotNull null
+                entityTypeAttributeService.checkAttributeUniqueness(
+                    typeId = typeId,
+                    fieldId = fieldId,
+                    value = payload.value,
+                    excludeEntityId = savedId,
+                )
+                fieldId to payload.value.toString()
+            }
+            .toMap()
+
+        entityTypeAttributeService.saveUniqueValues(
+            workspaceId = workspaceId,
+            entityId = savedId,
+            typeId = typeId,
+            uniqueValues = uniqueValuesToSave,
+        )
+    }
 
     /**
      * Enriches the attribute payload with default values from the schema and auto-generated IDs.

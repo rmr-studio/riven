@@ -2,6 +2,7 @@ package riven.core.models.core.base
 
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.CommunicationType
 import riven.core.enums.core.DataType
 import riven.core.enums.core.DynamicDefaultFunction
 import riven.core.enums.entity.EntityTypeRole
@@ -105,7 +106,7 @@ object CommunicationModel : riven.core.models.core.CoreModelDefinition(
         ),
         "type" to CoreModelAttribute(
             schemaType = SchemaType.SELECT, label = "Type", dataType = DataType.STRING,
-            options = SchemaOptions(enum = listOf("meeting", "call", "email", "sms", "social-media")),
+            options = SchemaOptions(enum = CommunicationType.entries.map { it.value }),
             semantics = AttributeSemantics(
                 definition = "The format or medium of this communication.",
                 classification = SemanticAttributeClassification.CATEGORICAL,

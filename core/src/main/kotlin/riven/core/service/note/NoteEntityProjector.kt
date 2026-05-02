@@ -9,6 +9,7 @@ import riven.core.enums.integration.SourceType
 import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.enums.note.NoteSourceType
 import riven.core.exceptions.NotFoundException
+import riven.core.exceptions.SchemaValidationException
 import riven.core.models.note.Note
 import riven.core.models.note.NoteEntityContext
 import riven.core.models.note.WorkspaceNote
@@ -82,7 +83,9 @@ class NoteEntityProjector(
         val all = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, KnowledgeEntityTypeKey.NOTE.key)
         val filtered = if (!search.isNullOrBlank()) {
             val term = search.lowercase()
-            all.filter { matchesPlaintext(it, noteType, term) }
+            val plaintextId = resolvePlaintextAttributeId(noteType)
+            val titleId = resolveTitleAttributeId(noteType)
+            all.filter { matchesPlaintext(it, plaintextId, titleId, term) }
         } else all
 
         val (cursorCreatedAt, cursorId) = CursorPagination.decodeCursor(cursor)
@@ -229,12 +232,30 @@ class NoteEntityProjector(
         val plaintextId = mapping["plaintext"]?.let(UUID::fromString)
             ?: error("note entity type missing 'plaintext' attribute mapping")
 
-        val title = (attrs[titleId]?.value as? String) ?: ""
+        val title = (attrs[titleId]?.value as? String)
+            ?: throw SchemaValidationException(listOf("note attribute 'title' is missing or not a string"))
         @Suppress("UNCHECKED_CAST")
-        val content = (attrs[contentId]?.value as? List<Map<String, Any>>) ?: emptyList()
-        val plaintext = (attrs[plaintextId]?.value as? String) ?: ""
+        val content = (attrs[contentId]?.value as? List<Map<String, Any>>)
+            ?: throw SchemaValidationException(listOf("note attribute 'content' is missing or not a list"))
+        val plaintext = (attrs[plaintextId]?.value as? String)
+            ?: throw SchemaValidationException(listOf("note attribute 'plaintext' is missing or not a string"))
         return Triple(title, content, plaintext)
     }
+
+    /**
+     * Resolves the plaintext attribute id from the note entity type's attributeKeyMapping.
+     * Throws SchemaValidationException when missing — keeps search consistent with project
+     * read paths instead of silently filtering out malformed notes.
+     */
+    private fun resolvePlaintextAttributeId(noteType: EntityTypeEntity): UUID {
+        val mapping = noteType.attributeKeyMapping
+            ?: throw SchemaValidationException(listOf("note entity type missing attributeKeyMapping"))
+        return mapping["plaintext"]?.let(UUID::fromString)
+            ?: throw SchemaValidationException(listOf("note entity type missing 'plaintext' attribute mapping"))
+    }
+
+    private fun resolveTitleAttributeId(noteType: EntityTypeEntity): UUID? =
+        noteType.attributeKeyMapping?.get("title")?.let(UUID::fromString)
 
     /**
      * Fetch entity context (display name, type metadata) for a set of entity ids.
@@ -287,14 +308,19 @@ class NoteEntityProjector(
      * TODO(Phase F): replace with a persisted `entities.search_vector` or per-attribute FTS index
      * once the legacy `notes` table is dropped and we no longer rely on its `search_vector`.
      */
-    private fun matchesPlaintext(entity: EntityEntity, noteType: EntityTypeEntity, lowercaseTerm: String): Boolean {
-        val id = entity.id ?: return false
-        val mapping = noteType.attributeKeyMapping ?: return false
-        val plaintextId = mapping["plaintext"]?.let(UUID::fromString) ?: return false
-        val titleId = mapping["title"]?.let(UUID::fromString)
+    private fun matchesPlaintext(
+        entity: EntityEntity,
+        plaintextId: UUID,
+        titleId: UUID?,
+        lowercaseTerm: String,
+    ): Boolean {
+        val id = requireNotNull(entity.id) { "entity.id" }
         val attrs = entityAttributeService.getAttributes(id)
+        val plaintext = (attrs[plaintextId]?.value as? String)
+            ?: throw SchemaValidationException(
+                listOf("note ${id} attribute 'plaintext' is missing or not a string"),
+            )
         val title = (titleId?.let { attrs[it]?.value } as? String) ?: ""
-        val plaintext = (attrs[plaintextId]?.value as? String) ?: ""
         return plaintext.lowercase().contains(lowercaseTerm) || title.lowercase().contains(lowercaseTerm)
     }
 

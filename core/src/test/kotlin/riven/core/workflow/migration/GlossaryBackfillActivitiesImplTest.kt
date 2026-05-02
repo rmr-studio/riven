@@ -89,8 +89,8 @@ class GlossaryBackfillActivitiesImplTest {
         assertThat(input.term).isEqualTo("Retention Rate")
         assertThat(input.normalizedTerm).isEqualTo("retention rate")
         assertThat(input.definition).contains("subscription 90 days")
-        assertThat(input.category).isEqualTo("METRIC")
-        assertThat(input.source).isEqualTo("MANUAL")
+        assertThat(input.category).isEqualTo(DefinitionCategory.METRIC)
+        assertThat(input.source).isEqualTo(DefinitionSource.MANUAL)
         assertThat(input.isCustomised).isTrue()
         assertThat(input.sourceExternalId).isEqualTo("legacy:$definitionId")
         assertThat(input.entityTypeRefs).containsExactly(typeRef)
@@ -103,7 +103,7 @@ class GlossaryBackfillActivitiesImplTest {
         val legacy = BusinessDefinitionFactory.createDefinition(id = definitionId, workspaceId = workspaceId)
         whenever(definitionRepository.findById(definitionId)).thenReturn(Optional.of(legacy))
         whenever(glossaryEntityIngestionService.upsert(any()))
-            .thenThrow(DataIntegrityViolationException("duplicate key"))
+            .thenThrow(DataIntegrityViolationException("duplicate key", java.sql.SQLException("duplicate", "23505")))
 
         val result = activities.migrateBatch(workspaceId, listOf(definitionId))
 
@@ -129,7 +129,7 @@ class GlossaryBackfillActivitiesImplTest {
             .thenReturn(savedEntity)
             .thenReturn(savedEntity)
             .thenReturn(savedEntity)
-            .thenThrow(DataIntegrityViolationException("duplicate"))
+            .thenThrow(DataIntegrityViolationException("duplicate", java.sql.SQLException("duplicate", "23505")))
 
         val first = activities.migrateBatch(workspaceId, ids)
 

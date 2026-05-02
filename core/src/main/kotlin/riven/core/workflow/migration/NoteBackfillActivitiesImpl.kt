@@ -80,8 +80,13 @@ class NoteBackfillActivitiesImpl(
                 }
                 heartbeatSafe(noteId)
             } catch (e: DataIntegrityViolationException) {
-                logger.warn { "Note $noteId already migrated — skipping" }
-                skipped++
+                if (isUniqueViolation(e)) {
+                    logger.warn { "Note $noteId already migrated — skipping" }
+                    skipped++
+                } else {
+                    logger.error(e) { "Note $noteId integrity violation (non-unique) — failed" }
+                    failed++
+                }
             } catch (e: Exception) {
                 logger.error(e) { "Failed to migrate note $noteId" }
                 failed++

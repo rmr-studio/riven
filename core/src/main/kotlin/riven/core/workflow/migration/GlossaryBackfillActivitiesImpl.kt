@@ -81,8 +81,13 @@ class GlossaryBackfillActivitiesImpl(
                 }
                 heartbeatSafe(definitionId)
             } catch (e: DataIntegrityViolationException) {
-                logger.warn { "Glossary definition $definitionId already migrated — skipping" }
-                skipped++
+                if (isUniqueViolation(e)) {
+                    logger.warn { "Glossary definition $definitionId already migrated — skipping" }
+                    skipped++
+                } else {
+                    logger.error(e) { "Glossary definition $definitionId integrity violation (non-unique) — failed" }
+                    failed++
+                }
             } catch (e: Exception) {
                 logger.error(e) { "Failed to migrate glossary definition $definitionId" }
                 failed++
@@ -109,8 +114,8 @@ class GlossaryBackfillActivitiesImpl(
                 term = definition.term,
                 normalizedTerm = definition.normalizedTerm,
                 definition = definition.definition,
-                category = definition.category.name,
-                source = definition.source.name,
+                category = definition.category,
+                source = definition.source,
                 isCustomised = definition.isCustomized,
                 sourceExternalId = "legacy:${requireNotNull(definition.id) { "definition.id" }}",
                 entityTypeRefs = definition.entityTypeRefs.toSet(),

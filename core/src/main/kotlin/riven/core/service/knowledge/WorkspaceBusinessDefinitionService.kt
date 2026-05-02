@@ -132,8 +132,8 @@ class WorkspaceBusinessDefinitionService(
                 term = request.term.trim(),
                 normalizedTerm = newNormalizedTerm,
                 definition = request.definition,
-                category = request.category.name,
-                source = current.source.name,
+                category = request.category,
+                source = current.source,
                 isCustomised = current.isCustomized,
                 sourceExternalId = sourceExternalIdFor(id, existing.sourceExternalId),
                 sourceType = existing.sourceType,
@@ -216,8 +216,8 @@ class WorkspaceBusinessDefinitionService(
                 term = request.term.trim(),
                 normalizedTerm = normalizedTerm,
                 definition = request.definition,
-                category = request.category.name,
-                source = request.source.name,
+                category = request.category,
+                source = request.source,
                 isCustomised = request.isCustomized,
                 // For freshly-created definitions the entity id is generated inside the
                 // ingestion call; downstream identity is via (workspaceId, normalizedTerm)

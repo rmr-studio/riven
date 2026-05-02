@@ -29,6 +29,7 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.util.BaseServiceTest
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import org.junit.jupiter.api.Nested
@@ -39,6 +40,7 @@ import java.util.*
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
+        SecurityTestConfig::class,
         EntityTypeRelationshipServiceTest.TestConfig::class,
         EntityTypeRelationshipService::class,
     ]
@@ -890,6 +892,35 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
 
             assertTrue(exception.message!!.contains("readonly"))
             verify(definitionRepository, never()).save(any<RelationshipDefinitionEntity>())
+        }
+    }
+
+    /**
+     * Regression for r3172127159: @PreAuthorize on getOrCreateSystemDefinition must reject
+     * callers whose JWT lacks the requested workspace's role authority. Pairs with the inner
+     * workspace check from r3166515144 — the @PreAuthorize gate is the first stop, the inner
+     * `require(def.workspaceId == workspaceId)` is the safety net once past authorization.
+     */
+    @Nested
+    @WithUserPersona(
+        userId = "11111111-1111-1111-1111-111111111111",
+        email = "stranger@test.com",
+        displayName = "Stranger",
+        roles = [
+            WorkspaceRole(
+                workspaceId = "00000000-0000-0000-0000-000000000000",
+                role = WorkspaceRoles.OWNER,
+            ),
+        ],
+    )
+    inner class SystemDefinitionAuthGuard {
+
+        @Test
+        fun `getOrCreateSystemDefinition - persona without workspace authority - throws AccessDeniedException`() {
+            val noteTypeId = UUID.randomUUID()
+            org.junit.jupiter.api.assertThrows<org.springframework.security.access.AccessDeniedException> {
+                service.getOrCreateSystemDefinition(workspaceId, noteTypeId, SystemRelationshipType.ATTACHMENT)
+            }
         }
     }
 }

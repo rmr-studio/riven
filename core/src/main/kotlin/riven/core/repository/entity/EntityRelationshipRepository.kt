@@ -84,6 +84,16 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      * targeting different `target_kind` values on the same definition do not delete each
      * other's rows.
      */
+    @Modifying
+    @Query(
+        """
+        DELETE FROM EntityRelationshipEntity r
+        WHERE r.sourceId = :sourceId
+          AND r.definitionId = :definitionId
+          AND r.targetKind = :targetKind
+          AND r.targetId IN :targetIds
+        """,
+    )
     fun deleteAllBySourceIdAndDefinitionIdAndTargetKindAndTargetIdIn(
         sourceId: UUID,
         definitionId: UUID,
@@ -97,12 +107,45 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      * for one parent does not touch rows under a different parent that happen to share
      * (sourceId, definitionId, targetKind).
      */
+    @Modifying
+    @Query(
+        """
+        DELETE FROM EntityRelationshipEntity r
+        WHERE r.sourceId = :sourceId
+          AND r.definitionId = :definitionId
+          AND r.targetKind = :targetKind
+          AND r.targetParentId = :targetParentId
+          AND r.targetId IN :targetIds
+        """,
+    )
     fun deleteAllBySourceIdAndDefinitionIdAndTargetKindAndTargetParentIdAndTargetIdIn(
         sourceId: UUID,
         definitionId: UUID,
         targetKind: riven.core.enums.entity.RelationshipTargetKind,
         targetParentId: UUID,
         targetIds: Collection<UUID>,
+    )
+
+    /**
+     * Hard-delete every relationship row matching `(sourceId, definitionId, targetKind)`
+     * regardless of `targetParentId`. Used by the knowledge ingestion path to clear all
+     * parent-scoped rows of a given kind when the input carries no refs of that kind, since
+     * `replaceForDefinitionInternal` requires a non-null `targetParentId` for ATTRIBUTE / RELATIONSHIP
+     * reconciliation.
+     */
+    @Modifying
+    @Query(
+        """
+        DELETE FROM EntityRelationshipEntity r
+        WHERE r.sourceId = :sourceId
+          AND r.definitionId = :definitionId
+          AND r.targetKind = :targetKind
+        """,
+    )
+    fun deleteAllBySourceIdAndDefinitionIdAndTargetKind(
+        sourceId: UUID,
+        definitionId: UUID,
+        targetKind: riven.core.enums.entity.RelationshipTargetKind,
     )
 
     /**

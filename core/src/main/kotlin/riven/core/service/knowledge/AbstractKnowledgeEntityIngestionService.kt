@@ -4,6 +4,8 @@ import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
+import riven.core.enums.entity.RelationshipTargetKind
+import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -43,6 +45,14 @@ abstract class AbstractKnowledgeEntityIngestionService<TInput : KnowledgeIngesti
     /** Outbound relationship batches the upsert should reconcile. */
     protected abstract fun relationshipBatches(input: TInput): List<KnowledgeRelationshipBatch>
 
+    /**
+     * Parent-scoped relationship kinds (ATTRIBUTE / RELATIONSHIP) the upsert should fully clear
+     * for the saved entity. Used when the input carries no refs of that kind and the regular
+     * [replaceRelationshipsInternal] path cannot run because it requires a non-null
+     * `targetParentId` for parent-scoped kinds. Default: empty.
+     */
+    protected open fun clearParentScopedKinds(input: TInput): Set<Pair<SystemRelationshipType, RelationshipTargetKind>> = emptySet()
+
     /** Optional hook — subclasses may persist domain-specific extras (e.g. pendingAssociations). */
     protected open fun postSave(saved: EntityEntity, input: TInput) {}
 
@@ -66,8 +76,28 @@ abstract class AbstractKnowledgeEntityIngestionService<TInput : KnowledgeIngesti
             syncRelationship(input.workspaceId, saved, batch, input.linkSource)
         }
 
+        clearParentScopedKinds(input).forEach { (systemType, targetKind) ->
+            clearKind(input.workspaceId, saved, systemType, targetKind)
+        }
+
         postSave(saved, input)
         return saved
+    }
+
+    private fun clearKind(
+        workspaceId: UUID,
+        knowledgeEntity: EntityEntity,
+        systemType: SystemRelationshipType,
+        targetKind: RelationshipTargetKind,
+    ) {
+        val sourceId = requireNotNull(knowledgeEntity.id) { "knowledgeEntity.id" }
+        val typeId = knowledgeEntity.typeId
+        val def = entityTypeRelationshipService.getOrCreateSystemDefinition(workspaceId, typeId, systemType)
+        entityIngestionService.clearRelationshipsByKindInternal(
+            sourceEntityId = sourceId,
+            relationshipDefinitionId = requireNotNull(def.id) { "system relationship definition id must not be null" },
+            targetKind = targetKind,
+        )
     }
 
     open fun softDelete(workspaceId: UUID, entityId: UUID) {

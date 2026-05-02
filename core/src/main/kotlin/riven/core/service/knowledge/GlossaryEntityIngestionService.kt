@@ -6,6 +6,8 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.entity.RelationshipTargetKind
 import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
+import riven.core.enums.knowledge.DefinitionCategory
+import riven.core.enums.knowledge.DefinitionSource
 import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.models.knowledge.AttributeRef
 import riven.core.repository.entity.EntityRepository
@@ -46,8 +48,8 @@ class GlossaryEntityIngestionService(
         val term: String,
         val normalizedTerm: String,
         val definition: String,
-        val category: String,
-        val source: String,
+        val category: DefinitionCategory,
+        val source: DefinitionSource,
         val isCustomised: Boolean,
         override val sourceExternalId: String,
         val entityTypeRefs: Set<UUID> = emptySet(),
@@ -65,8 +67,8 @@ class GlossaryEntityIngestionService(
         attributeId(entityType, "term") to input.term,
         attributeId(entityType, "normalized_term") to input.normalizedTerm,
         attributeId(entityType, "definition") to input.definition,
-        attributeId(entityType, "category") to input.category,
-        attributeId(entityType, "source") to input.source,
+        attributeId(entityType, "category") to input.category.name,
+        attributeId(entityType, "source") to input.source.name,
         attributeId(entityType, "is_customised") to input.isCustomised,
     )
 
@@ -74,28 +76,18 @@ class GlossaryEntityIngestionService(
         // DEFINES edges fan out across multiple target_kinds; all reuse the same definition row.
         // ATTRIBUTE rows are split per owning entity_type so each batch can carry the correct
         // `targetParentId` required by the entity_relationships CHECK constraint. When the
-        // input carries no attribute refs we still emit a single empty ATTRIBUTE batch so
-        // existing rows get reconciled away.
-        val attributeBatches = if (input.attributeRefs.isEmpty()) {
-            listOf(
+        // input carries no attribute refs we emit no ATTRIBUTE batch — the abstract base
+        // handles "clear all parent-scoped rows of this kind" via [clearParentScopedKinds].
+        val attributeBatches = input.attributeRefs
+            .groupBy { it.ownerEntityTypeId }
+            .map { (ownerEntityTypeId, refs) ->
                 KnowledgeRelationshipBatch(
                     systemType = SystemRelationshipType.DEFINES,
-                    targetIds = emptySet(),
+                    targetIds = refs.map { it.attributeId }.toSet(),
                     targetKind = RelationshipTargetKind.ATTRIBUTE,
-                ),
-            )
-        } else {
-            input.attributeRefs
-                .groupBy { it.ownerEntityTypeId }
-                .map { (ownerEntityTypeId, refs) ->
-                    KnowledgeRelationshipBatch(
-                        systemType = SystemRelationshipType.DEFINES,
-                        targetIds = refs.map { it.attributeId }.toSet(),
-                        targetKind = RelationshipTargetKind.ATTRIBUTE,
-                        targetParentId = ownerEntityTypeId,
-                    )
-                }
-        }
+                    targetParentId = ownerEntityTypeId,
+                )
+            }
 
         return buildList {
             add(
@@ -115,4 +107,11 @@ class GlossaryEntityIngestionService(
             )
         }
     }
+
+    override fun clearParentScopedKinds(input: GlossaryIngestionInput): Set<Pair<SystemRelationshipType, RelationshipTargetKind>> =
+        if (input.attributeRefs.isEmpty()) {
+            setOf(SystemRelationshipType.DEFINES to RelationshipTargetKind.ATTRIBUTE)
+        } else {
+            emptySet()
+        }
 }

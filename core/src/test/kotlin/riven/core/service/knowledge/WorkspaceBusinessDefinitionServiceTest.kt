@@ -227,7 +227,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
         val input = captor.firstValue
         assertThat(input.term).isEqualTo("Retention Rate")
         assertThat(input.normalizedTerm).isEqualTo("retention rate")
-        assertThat(input.category).isEqualTo("METRIC")
+        assertThat(input.category).isEqualTo(DefinitionCategory.METRIC)
     }
 
     @Test
@@ -355,6 +355,49 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
             service.deleteDefinition(workspaceId, defId)
         }
         verify(glossaryEntityIngestionService, never()).softDelete(any(), any())
+    }
+
+    /**
+     * Regression for r3172127160: @PreAuthorize on listDefinitions / createDefinition must
+     * reject callers whose JWT lacks the requested workspace's role authority.
+     */
+    @org.junit.jupiter.api.Nested
+    @WithUserPersona(
+        userId = "11111111-1111-1111-1111-111111111111",
+        email = "stranger@test.com",
+        displayName = "Stranger",
+        roles = [
+            WorkspaceRole(
+                workspaceId = "00000000-0000-0000-0000-000000000000",
+                role = WorkspaceRoles.OWNER,
+            ),
+        ],
+    )
+    inner class UnauthorizedAccess {
+
+        @Test
+        fun `listDefinitions - persona without workspace authority - throws AccessDeniedException`() {
+            assertThrows<org.springframework.security.access.AccessDeniedException> {
+                service.listDefinitions(workspaceId, category = null, status = null)
+            }
+        }
+
+        @Test
+        fun `createDefinition - persona without workspace authority - throws AccessDeniedException`() {
+            val request = CreateBusinessDefinitionRequest(
+                term = "Term",
+                definition = "Definition",
+                category = DefinitionCategory.CUSTOM,
+                source = DefinitionSource.MANUAL,
+                isCustomized = false,
+                entityTypeRefs = emptyList(),
+                attributeRefs = emptyList(),
+            )
+            assertThrows<org.springframework.security.access.AccessDeniedException> {
+                service.createDefinition(workspaceId, request)
+            }
+            verify(glossaryEntityIngestionService, never()).upsert(any())
+        }
     }
 
     private fun stubbedDefinition(

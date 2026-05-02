@@ -14,6 +14,8 @@ import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.RelationshipTargetKind
 import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
+import riven.core.enums.knowledge.DefinitionCategory
+import riven.core.enums.knowledge.DefinitionSource
 import riven.core.models.knowledge.AttributeRef
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -125,8 +127,8 @@ class GlossaryEntityIngestionServiceTest {
             term = "MQL",
             normalizedTerm = "mql",
             definition = "Marketing-qualified lead",
-            category = "BUSINESS",
-            source = "MANUAL",
+            category = DefinitionCategory.CUSTOM,
+            source = DefinitionSource.MANUAL,
             isCustomised = false,
             sourceExternalId = "legacy:abc",
             entityTypeRefs = setOf(typeRefA, typeRefB),
@@ -154,8 +156,8 @@ class GlossaryEntityIngestionServiceTest {
         assertThat(payloadCaptor.firstValue[termAttrId]).isEqualTo("MQL")
         assertThat(payloadCaptor.firstValue[normalizedTermAttrId]).isEqualTo("mql")
         assertThat(payloadCaptor.firstValue[definitionAttrId]).isEqualTo("Marketing-qualified lead")
-        assertThat(payloadCaptor.firstValue[categoryAttrId]).isEqualTo("BUSINESS")
-        assertThat(payloadCaptor.firstValue[sourceAttrId]).isEqualTo("MANUAL")
+        assertThat(payloadCaptor.firstValue[categoryAttrId]).isEqualTo(DefinitionCategory.CUSTOM.name)
+        assertThat(payloadCaptor.firstValue[sourceAttrId]).isEqualTo(DefinitionSource.MANUAL.name)
         assertThat(payloadCaptor.firstValue[isCustomisedAttrId]).isEqualTo(false)
 
         // Verify three relationship batches: DEFINES/ENTITY_TYPE, DEFINES/ATTRIBUTE, MENTION/ENTITY.
@@ -227,16 +229,18 @@ class GlossaryEntityIngestionServiceTest {
             term = "Bare term",
             normalizedTerm = "bare term",
             definition = "definition",
-            category = "OTHER",
-            source = "MANUAL",
+            category = DefinitionCategory.CUSTOM,
+            source = DefinitionSource.MANUAL,
             isCustomised = false,
             sourceExternalId = "legacy:bare",
         )
 
         service.upsert(input)
 
-        // ENTITY_TYPE + ATTRIBUTE batches still get invoked (with empty sets) so that prior
-        // refs are reconciled away on update.
+        // ENTITY_TYPE + MENTION batches still emit empty replaceRelationshipsInternal calls
+        // (null targetParentId is allowed for ENTITY_TYPE / ENTITY kinds). The ATTRIBUTE kind
+        // is parent-scoped, so when input carries no attribute refs the abstract base routes
+        // through clearRelationshipsByKindInternal to drop existing rows regardless of parent.
         verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId), sourceEntityId = any(),
             relationshipDefinitionId = eq(definesDefinitionId),
@@ -245,13 +249,10 @@ class GlossaryEntityIngestionServiceTest {
             targetKind = eq(RelationshipTargetKind.ENTITY_TYPE),
             targetParentId = eq(null),
         )
-        verify(entityIngestionService).replaceRelationshipsInternal(
-            workspaceId = eq(workspaceId), sourceEntityId = any(),
+        verify(entityIngestionService).clearRelationshipsByKindInternal(
+            sourceEntityId = any(),
             relationshipDefinitionId = eq(definesDefinitionId),
-            targetIds = eq(emptySet()),
-            linkSource = eq(SourceType.USER_CREATED),
             targetKind = eq(RelationshipTargetKind.ATTRIBUTE),
-            targetParentId = eq(null),
         )
         verify(entityIngestionService).replaceRelationshipsInternal(
             workspaceId = eq(workspaceId), sourceEntityId = any(),

@@ -95,7 +95,7 @@ class NoteBackfillActivitiesImplTest {
         whenever(noteRepository.findById(noteId)).thenReturn(Optional.of(legacy))
         whenever(noteAttachmentRepository.findEntityIdsByNoteId(noteId)).thenReturn(emptyList())
         whenever(noteEntityIngestionService.upsert(any()))
-            .thenThrow(DataIntegrityViolationException("duplicate key"))
+            .thenThrow(DataIntegrityViolationException("duplicate key", java.sql.SQLException("duplicate", "23505")))
 
         val result = activities.migrateBatch(workspaceId, listOf(noteId))
 
@@ -122,7 +122,7 @@ class NoteBackfillActivitiesImplTest {
             .thenReturn(savedEntity)
             .thenReturn(savedEntity)
             .thenReturn(savedEntity)
-            .thenThrow(DataIntegrityViolationException("duplicate"))
+            .thenThrow(DataIntegrityViolationException("duplicate", java.sql.SQLException("duplicate", "23505")))
 
         val first = activities.migrateBatch(workspaceId, noteIds)
 

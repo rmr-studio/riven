@@ -584,18 +584,23 @@ class EntityTypeRelationshipService(
         workspaceId: UUID,
         sourceEntityTypeId: UUID,
         systemType: SystemRelationshipType,
-    ): RelationshipDefinitionEntity = getOrCreateSystemDefinitionInternal(workspaceId, sourceEntityTypeId, systemType)
+    ): RelationshipDefinitionEntity {
+        val userId = authTokenService.getUserId()
+        return getOrCreateSystemDefinitionInternal(workspaceId, sourceEntityTypeId, systemType, userId = userId)
+    }
 
     /**
      * Internal variant of [getOrCreateSystemDefinition] without @PreAuthorize. Used by
      * [riven.core.service.catalog.TemplateInstallationService] during onboarding where the JWT
      * does not yet contain the new workspace's role authorities, and by the reused-entity-type
-     * promotion path where the seeding must be idempotent.
+     * promotion path where the seeding must be idempotent. Activity logging is skipped when
+     * [userId] is null (background / pre-auth contexts).
      */
     internal fun getOrCreateSystemDefinitionInternal(
         workspaceId: UUID,
         sourceEntityTypeId: UUID,
         systemType: SystemRelationshipType,
+        userId: UUID? = null,
     ): RelationshipDefinitionEntity {
         val existing = definitionRepository.findBySourceEntityTypeIdAndSystemType(sourceEntityTypeId, systemType)
         if (existing.isPresent) {
@@ -608,7 +613,7 @@ class EntityTypeRelationshipService(
         }
 
         return try {
-            createSystemDefinitionInternal(workspaceId, sourceEntityTypeId, systemType, userId = null)
+            createSystemDefinitionInternal(workspaceId, sourceEntityTypeId, systemType, userId = userId)
         } catch (e: DataIntegrityViolationException) {
             logger.warn { "Concurrent $systemType creation for entity type $sourceEntityTypeId, retrying read" }
             definitionRepository.findBySourceEntityTypeIdAndSystemType(sourceEntityTypeId, systemType)
