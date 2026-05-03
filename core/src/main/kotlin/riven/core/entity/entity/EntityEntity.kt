@@ -11,6 +11,7 @@ import riven.core.enums.integration.SourceType
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityLink
+import riven.core.models.entity.partitionForEntityProjection
 import riven.core.models.entity.payload.EntityAttribute
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayload
@@ -91,13 +92,26 @@ data class EntityEntity(
     
     /**
      * Convert this entity to a domain model.
+     *
+     * [links] is the flat list returned by
+     * `EntityRelationshipService.findRelatedEntities` for this entity. It is
+     * partitioned here into:
+     *  - `relationships`: outbound edges of any kind plus inbound `CONNECTED_ENTITIES`
+     *    edges, keyed by `definitionId`. Folded into `payload` as
+     *    [EntityAttributeRelationPayload] entries (preserves the existing model
+     *    shape for relationship-picker callers).
+     *  - `knowledgeRefs`: inbound `ATTACHMENT` / `MENTION` / `DEFINES` edges from
+     *    `surface_role = KNOWLEDGE` source types, keyed by source `typeKey`.
+     *    Surfaced as a top-level field on [Entity].
      */
     fun toModel(
         audit: Boolean = false,
-        relationships: Map<UUID, List<EntityLink>> = emptyMap(),
+        links: List<EntityLink> = emptyList(),
         attributes: Map<UUID, EntityAttributePrimitivePayload>,
     ): Entity {
         val id = requireNotNull(this.id) { "EntityEntity ID cannot be null" }
+
+        val (relationships, knowledgeRefs) = links.partitionForEntityProjection()
 
         val primitiveAttributes: Map<UUID, EntityAttribute> =
             attributes.map { (key, value) -> key to EntityAttribute(payload = value) }.toMap()
@@ -134,6 +148,7 @@ data class EntityEntity(
             firstSyncedAt = this.firstSyncedAt,
             lastSyncedAt = this.lastSyncedAt,
             syncVersion = this.syncVersion,
+            knowledgeRefs = knowledgeRefs,
         )
     }
 }

@@ -52,6 +52,7 @@ class EntityIngestionService(
     private val entityTypeAttributeService: EntityTypeAttributeService,
     private val entityAttributeService: EntityAttributeService,
     private val sequenceService: EntityTypeSequenceService,
+    private val entitySearchService: EntitySearchService,
     private val logger: KLogger,
 ) {
 
@@ -118,6 +119,8 @@ class EntityIngestionService(
         )
 
         enforceUniqueValues(type, savedId, workspaceId, typeId, enrichedPayload)
+
+        entitySearchService.recompute(workspaceId, savedId, type)
 
         logger.debug { "saveEntityInternal saved entity $savedId in workspace $workspaceId (type=${type.key})" }
         return saved

@@ -894,14 +894,14 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
     fun `findRelatedEntities - forward - returns targets`() {
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
 
         assertTrue(result.isEmpty())
         verify(entityRelationshipRepository).findEntityLinksBySourceId(sourceEntityId, workspaceId)
-        verify(entityRelationshipRepository).findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name))
+        verify(entityRelationshipRepository).findInverseEntityLinksByTargetId(sourceEntityId, workspaceId)
     }
 
     @Test
@@ -918,6 +918,8 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
             on { getIconColour() } doReturn "NEUTRAL"
             on { getTypeKey() } doReturn "company"
             on { getLabel() } doReturn "Acme Corp"
+            on { getDirection() } doReturn "FORWARD"
+            on { getSystemType() } doReturn null
         }
 
         val inverseProjection = mock<riven.core.projection.entity.EntityLinkProjection> {
@@ -929,18 +931,20 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
             on { getIconColour() } doReturn "NEUTRAL"
             on { getTypeKey() } doReturn "employee"
             on { getLabel() } doReturn "Alice"
+            on { getDirection() } doReturn "INVERSE"
+            on { getSystemType() } doReturn SystemRelationshipType.CONNECTED_ENTITIES.name
         }
 
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(listOf(forwardProjection))
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
             .thenReturn(listOf(inverseProjection))
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
 
         assertEquals(2, result.size)
-        assertTrue(result.containsKey(defId))
-        assertTrue(result.containsKey(inverseDefId))
+        assertEquals(1, result.count { it.definitionId == defId })
+        assertEquals(1, result.count { it.definitionId == inverseDefId })
     }
 
     @Test
@@ -949,7 +953,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         // This test verifies the service correctly delegates to both queries.
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
             .thenReturn(emptyList()) // repo returns nothing for inverse-invisible
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
@@ -970,6 +974,8 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
             on { getIconColour() } doReturn "NEUTRAL"
             on { getTypeKey() } doReturn "company"
             on { getLabel() } doReturn "Forward Entity"
+            on { getDirection() } doReturn "FORWARD"
+            on { getSystemType() } doReturn null
         }
 
         val inverseProjection = mock<riven.core.projection.entity.EntityLinkProjection> {
@@ -981,17 +987,19 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
             on { getIconColour() } doReturn "NEUTRAL"
             on { getTypeKey() } doReturn "company"
             on { getLabel() } doReturn "Inverse Entity"
+            on { getDirection() } doReturn "INVERSE"
+            on { getSystemType() } doReturn SystemRelationshipType.CONNECTED_ENTITIES.name
         }
 
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(listOf(forwardProjection))
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
             .thenReturn(listOf(inverseProjection))
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
 
-        assertEquals(1, result.size)
-        assertEquals(2, result[defId]!!.size)
+        assertEquals(2, result.size)
+        assertEquals(2, result.count { it.definitionId == defId })
     }
 
     // ------ System-bus workspace guard (regression for r3176253151) ------

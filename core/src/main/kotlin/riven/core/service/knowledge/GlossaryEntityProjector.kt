@@ -14,7 +14,7 @@ import riven.core.exceptions.NotFoundException
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.knowledge.AttributeRef
-import riven.core.models.knowledge.WorkspaceBusinessDefinition
+import riven.core.models.knowledge.GlossaryTerm
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -22,7 +22,7 @@ import riven.core.service.entity.EntityAttributeService
 import java.util.UUID
 
 /**
- * Reshapes entity-backed `glossary` rows back into the existing [WorkspaceBusinessDefinition]
+ * Reshapes entity-backed `glossary` rows back into the existing [GlossaryTerm]
  * DTO contract. Read-only — does not mutate entities or relationships.
  *
  * Inputs:
@@ -33,7 +33,7 @@ import java.util.UUID
  *     `entityTypeRefs` (target_kind=ENTITY_TYPE) and `attributeRefs` (target_kind=ATTRIBUTE).
  *
  * Cross-domain note: this projector is the post-cutover read path for the knowledge
- * controller — it preserves the JSON shape exposed by [WorkspaceBusinessDefinition] so
+ * controller — it preserves the JSON shape exposed by [GlossaryTerm] so
  * the frontend doesn't need to know that glossary terms are now entities. Fields with no
  * direct entity-layer storage (`compiledParams`, `status`, `version`) project to fixed
  * defaults: compiledParams=null, status=ACTIVE, version=0.
@@ -48,16 +48,16 @@ class GlossaryEntityProjector(
 
     // ------ Public read operations ------
 
-    /** Project a single glossary entity into a [WorkspaceBusinessDefinition]. */
+    /** Project a single glossary entity into a [GlossaryTerm]. */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun project(workspaceId: UUID, entity: EntityEntity): WorkspaceBusinessDefinition {
+    fun project(workspaceId: UUID, entity: EntityEntity): GlossaryTerm {
         val type = resolveGlossaryType(workspaceId)
         return buildDefinition(entity, type)
     }
 
     /** Project every glossary entity in the workspace. */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun listAll(workspaceId: UUID): List<WorkspaceBusinessDefinition> {
+    fun listAll(workspaceId: UUID): List<GlossaryTerm> {
         val rows = entityRepository.findByWorkspaceIdAndTypeKey(workspaceId, KnowledgeEntityTypeKey.GLOSSARY.key)
         if (rows.isEmpty()) return emptyList()
         val type = resolveGlossaryType(workspaceId)
@@ -95,7 +95,7 @@ class GlossaryEntityProjector(
             )
         }
 
-    private fun buildDefinition(entity: EntityEntity, type: EntityTypeEntity): WorkspaceBusinessDefinition {
+    private fun buildDefinition(entity: EntityEntity, type: EntityTypeEntity): GlossaryTerm {
         val entityId = requireNotNull(entity.id) { "entity.id" }
         val attrs = entityAttributeService.getAttributes(entityId)
         val mapping = type.attributeKeyMapping
@@ -105,20 +105,17 @@ class GlossaryEntityProjector(
 
         val (entityTypeRefs, attributeRefs) = readDefinesEdges(entityId)
 
-        return WorkspaceBusinessDefinition(
+        return GlossaryTerm(
             id = entityId,
             workspaceId = entity.workspaceId,
             term = term,
             normalizedTerm = normalizedTerm,
             definition = definition,
             category = parseCategory(category),
-            compiledParams = null,
-            status = DefinitionStatus.ACTIVE,
             source = parseSource(source),
             entityTypeRefs = entityTypeRefs,
             attributeRefs = attributeRefs,
             isCustomized = isCustomised,
-            version = 0,
             createdBy = entity.createdBy,
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
@@ -127,8 +124,8 @@ class GlossaryEntityProjector(
 
     /**
      * Read the source's DEFINES relationship rows once, then split them by
-     * `target_kind` to populate the legacy [WorkspaceBusinessDefinition.entityTypeRefs]
-     * and [WorkspaceBusinessDefinition.attributeRefs] lists.
+     * `target_kind` to populate the legacy [GlossaryTerm.entityTypeRefs]
+     * and [GlossaryTerm.attributeRefs] lists.
      */
     private fun readDefinesEdges(sourceId: UUID): Pair<List<UUID>, List<AttributeRef>> {
         val rows = entityRelationshipRepository

@@ -83,6 +83,13 @@ CREATE TABLE IF NOT EXISTS public.entities
     -- this column to retry resolution after sibling rows arrive in later syncs.
     "pending_associations"  JSONB,
 
+    -- Workspace-wide full-text search index. Recomputed by EntitySearchService on every
+    -- entity write — `setweight(to_tsvector(identifier), 'A') || setweight(to_tsvector(body), 'B')`
+    -- where `identifier` is the value of the entity's identifier attribute and `body` is the
+    -- concatenation of every TEXT / EMAIL / URL / PHONE attribute not flagged
+    -- `excludeFromSearch` in the type schema. GIN-indexed for ts_rank_cd queries.
+    "search_vector"         TSVECTOR,
+
     -- Composite uniqueness so sibling tables (e.g. entity_connotation) can declare a
     -- composite FK on (id, workspace_id) and enforce that the workspace_id of any
     -- referencing row matches the entity it points at. id alone is already PK; this

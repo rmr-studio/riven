@@ -320,7 +320,9 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(ea.value #>> '{}', e.id::text) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label,
+                'FORWARD' as direction,
+                rd.system_type as systemType
             FROM entity_relationships r
             JOIN entities e ON r.target_id = e.id
             LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
@@ -348,7 +350,9 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(ea.value #>> '{}', e.id::text) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label,
+                'FORWARD' as direction,
+                rd.system_type as systemType
             FROM entity_relationships r
             JOIN entities e ON r.target_id = e.id
             LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
@@ -367,6 +371,20 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      *
      * The sourceEntityId column aliases r.target_id (the entity being viewed),
      * keeping the EntityLink contract consistent.
+     *
+     * The predicate admits inverse rows when any of the following hold:
+     *  - a relationship_target_rule applies for the target's entity type (the
+     *    source's relationship definition explicitly targets that type),
+     *  - the definition's `system_type` is `CONNECTED_ENTITIES` (the symmetric
+     *    fallback edge), or
+     *  - the definition's `system_type` is one of the knowledge edge kinds
+     *    (`ATTACHMENT`, `MENTION`, `DEFINES`) AND the source entity's type has
+     *    `surface_role = 'KNOWLEDGE'` — i.e. the row is a knowledge entity
+     *    referencing this target.
+     *
+     * `r.target_kind = 'ENTITY'` is enforced so structural DEFINES edges
+     * (targeting `ENTITY_TYPE` / `ATTRIBUTE` / `RELATIONSHIP` UUIDs) never
+     * leak into entity-instance lookups.
      */
     @Query(
         value = """
@@ -378,17 +396,25 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(ea.value #>> '{}', e.id::text) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label,
+                'INVERSE' as direction,
+                rd.system_type as systemType
             FROM entity_relationships r
             JOIN entities e ON r.source_entity_id = e.id
+            JOIN entity_types src_t ON src_t.id = e.type_id
             LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
             JOIN entities target_e ON r.target_id = target_e.id
             LEFT JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
             WHERE r.target_id = :targetId
+            AND r.target_kind = 'ENTITY'
             AND (
                 rtr.target_entity_type_id = target_e.type_id
-                OR rd.system_type = :systemType
+                OR rd.system_type = 'CONNECTED_ENTITIES'
+                OR (
+                    rd.system_type IN ('ATTACHMENT', 'MENTION', 'DEFINES')
+                    AND src_t.surface_role = 'KNOWLEDGE'
+                )
             )
             AND r.deleted = false
             AND e.deleted = false
@@ -396,10 +422,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         """,
         nativeQuery = true
     )
-    fun findInverseEntityLinksByTargetId(targetId: UUID, workspaceId: UUID, systemType: String): List<EntityLinkProjection>
+    fun findInverseEntityLinksByTargetId(targetId: UUID, workspaceId: UUID): List<EntityLinkProjection>
 
     /**
      * Batch variant: find inverse entity links for multiple target entities.
+     * Same predicate semantics as [findInverseEntityLinksByTargetId].
      */
     @Query(
         value = """
@@ -411,17 +438,25 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(ea.value #>> '{}', e.id::text) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label,
+                'INVERSE' as direction,
+                rd.system_type as systemType
             FROM entity_relationships r
             JOIN entities e ON r.source_entity_id = e.id
+            JOIN entity_types src_t ON src_t.id = e.type_id
             LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
             LEFT JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
             JOIN entities target_e ON r.target_id = target_e.id
             WHERE r.target_id = ANY(:ids)
+            AND r.target_kind = 'ENTITY'
             AND (
                 rtr.target_entity_type_id = target_e.type_id
-                OR rd.system_type = :systemType
+                OR rd.system_type = 'CONNECTED_ENTITIES'
+                OR (
+                    rd.system_type IN ('ATTACHMENT', 'MENTION', 'DEFINES')
+                    AND src_t.surface_role = 'KNOWLEDGE'
+                )
             )
             AND r.deleted = false
             AND e.deleted = false
@@ -429,5 +464,5 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         """,
         nativeQuery = true
     )
-    fun findInverseEntityLinksByTargetIdIn(ids: Array<UUID>, workspaceId: UUID, systemType: String): List<EntityLinkProjection>
+    fun findInverseEntityLinksByTargetIdIn(ids: Array<UUID>, workspaceId: UUID): List<EntityLinkProjection>
 }

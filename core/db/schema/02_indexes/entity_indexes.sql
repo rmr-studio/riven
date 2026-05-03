@@ -109,3 +109,9 @@ CREATE INDEX IF NOT EXISTS idx_entity_attributes_workspace
 CREATE INDEX IF NOT EXISTS idx_entity_attributes_trgm
     ON public.entity_attributes USING GIN ((value->>'value') gin_trgm_ops)
     WHERE deleted = false;
+
+-- Workspace-wide full-text search. GIN over the precomputed tsvector populated by
+-- EntitySearchService. Partial on non-deleted rows.
+CREATE INDEX IF NOT EXISTS idx_entities_search_vector
+    ON public.entities USING GIN (search_vector)
+    WHERE deleted = false;

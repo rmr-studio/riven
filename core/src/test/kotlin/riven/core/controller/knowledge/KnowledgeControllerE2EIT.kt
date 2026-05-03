@@ -24,10 +24,10 @@ import riven.core.enums.knowledge.DefinitionSource
 import riven.core.enums.knowledge.DefinitionStatus
 import riven.core.exceptions.ExceptionHandler
 import riven.core.models.knowledge.AttributeRef
-import riven.core.models.knowledge.WorkspaceBusinessDefinition
+import riven.core.models.knowledge.GlossaryTerm
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.entity.type.EntityTypeService
-import riven.core.service.knowledge.WorkspaceBusinessDefinitionService
+import riven.core.service.knowledge.GlossaryService
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.util.UUID
@@ -35,7 +35,7 @@ import java.util.UUID
 /**
  * E2E regression — knowledge controller contract preserved under the entity-backed reads
  * + writes post-cutover. Standalone MockMvc against [KnowledgeController]; the
- * [WorkspaceBusinessDefinitionService] is mocked at the boundary so this test exercises
+ * [GlossaryService] is mocked at the boundary so this test exercises
  * only the wire format.
  *
  * Asserts every business-definition endpoint returns the same WorkspaceBusinessDefinition
@@ -52,8 +52,8 @@ class KnowledgeControllerE2EIT {
     private val semanticMetadataService: EntityTypeSemanticMetadataService =
         mock(EntityTypeSemanticMetadataService::class.java)
     private val entityTypeService: EntityTypeService = mock(EntityTypeService::class.java)
-    private val businessDefinitionService: WorkspaceBusinessDefinitionService =
-        mock(WorkspaceBusinessDefinitionService::class.java)
+    private val businessDefinitionService: GlossaryService =
+        mock(GlossaryService::class.java)
     private val logger: KLogger = mock(KLogger::class.java)
 
     private val controller = KnowledgeController(
@@ -84,20 +84,17 @@ class KnowledgeControllerE2EIT {
         reset(businessDefinitionService)
     }
 
-    private fun sampleDefinition(): WorkspaceBusinessDefinition = WorkspaceBusinessDefinition(
+    private fun sampleDefinition(): GlossaryTerm = GlossaryTerm(
         id = definitionId,
         workspaceId = workspaceId,
         term = "Retention Rate",
         normalizedTerm = "retention rate",
         definition = "A customer is retained if they have an active subscription 90 days after first purchase",
         category = DefinitionCategory.METRIC,
-        compiledParams = null,
-        status = DefinitionStatus.ACTIVE,
         source = DefinitionSource.MANUAL,
         entityTypeRefs = listOf(typeRefId),
         attributeRefs = listOf(AttributeRef(attributeId = attrRefId, ownerEntityTypeId = typeRefId)),
         isCustomized = false,
-        version = 0,
         createdBy = null,
         createdAt = null,
         updatedAt = null,
@@ -115,13 +112,11 @@ class KnowledgeControllerE2EIT {
             .andExpect(jsonPath("$[0].term").value("Retention Rate"))
             .andExpect(jsonPath("$[0].normalizedTerm").value("retention rate"))
             .andExpect(jsonPath("$[0].category").value("METRIC"))
-            .andExpect(jsonPath("$[0].status").value("ACTIVE"))
             .andExpect(jsonPath("$[0].source").value("MANUAL"))
             .andExpect(jsonPath("$[0].entityTypeRefs[0]").value(typeRefId.toString()))
             .andExpect(jsonPath("$[0].attributeRefs[0].attributeId").value(attrRefId.toString()))
             .andExpect(jsonPath("$[0].attributeRefs[0].ownerEntityTypeId").value(typeRefId.toString()))
             .andExpect(jsonPath("$[0].isCustomized").value(false))
-            .andExpect(jsonPath("$[0].version").value(0))
     }
 
     @Test

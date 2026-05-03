@@ -13,7 +13,7 @@ import riven.core.enums.knowledge.KnowledgeEntityTypeKey
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.ConflictException
 import riven.core.exceptions.NotFoundException
-import riven.core.models.knowledge.WorkspaceBusinessDefinition
+import riven.core.models.knowledge.GlossaryTerm
 import riven.core.models.request.knowledge.CreateBusinessDefinitionRequest
 import riven.core.models.request.knowledge.UpdateBusinessDefinitionRequest
 import riven.core.service.activity.ActivityService
@@ -24,23 +24,14 @@ import riven.core.util.TermNormalizationUtil
 import java.util.UUID
 
 /**
- * Manages workspace-scoped business definitions — natural language descriptions of terms like
- * "retention" or "active customer" that the AI query pipeline uses for query generation.
+ * Manages workspace-scoped glossary terms — natural language descriptions of terms defined
+ * by a workspace that give further unique insights into the business context. Glossary terms are a key input for the AI query pipeline
+ * and are used to enrich the entity metadata that surfaces in the query builder and results.
  *
- * Post-cutover, every read and write path is backed by the entity layer:
- *   - mutations route through [GlossaryEntityIngestionService] (`upsert` / `softDelete`);
- *   - reads route through [GlossaryEntityProjector], which reshapes glossary entity rows
- *     back into the existing [WorkspaceBusinessDefinition] DTO contract.
- *
- * The legacy `workspace_business_definitions` JPA scaffolding (entity + repository) is no
- * longer referenced from this service — Phase F deletes the table and types.
- *
- * Fields with no direct entity-layer storage (`compiledParams`, `status`, `version`)
- * project to fixed defaults (null / ACTIVE / 0) for now; query-pipeline consumers that
- * relied on `compiledParams` should re-derive on demand.
+ * Each glossary term corresponds to a "glossary entity" in the entity layer, with a `typeKey` of `glossary_term`.
  */
 @Service
-class WorkspaceBusinessDefinitionService(
+class GlossaryService(
     private val glossaryEntityIngestionService: GlossaryEntityIngestionService,
     private val glossaryEntityProjector: GlossaryEntityProjector,
     private val entityIngestionService: EntityIngestionService,
@@ -49,33 +40,25 @@ class WorkspaceBusinessDefinitionService(
     private val logger: KLogger,
 ) {
 
-    // ------ Public read operations ------
-
-    /**
-     * List all definitions for a workspace, optionally filtered by status and/or category.
-     *
-     * Note: post-cutover, every projected definition surfaces `status=ACTIVE` (the entity
-     * layer does not yet model the SUGGESTED state). A non-null `status` filter therefore
-     * either matches everything (ACTIVE) or matches nothing (SUGGESTED).
-     */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional(readOnly = true)
     fun listDefinitions(
         workspaceId: UUID,
         status: DefinitionStatus? = null,
         category: DefinitionCategory? = null,
-    ): List<WorkspaceBusinessDefinition> {
+    ): List<GlossaryTerm> {
+        // `status` is accepted for API compatibility while glossary entities do not yet
+        // carry a per-row status field; filter only by category for now.
         val all = glossaryEntityProjector.listAll(workspaceId)
         return all.filter { def ->
-            (status == null || def.status == status) &&
-                (category == null || def.category == category)
+            category == null || def.category == category
         }
     }
 
     /** Get a single definition by ID within a workspace. */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional(readOnly = true)
-    fun getDefinition(workspaceId: UUID, id: UUID): WorkspaceBusinessDefinition {
+    fun getDefinition(workspaceId: UUID, id: UUID): GlossaryTerm {
         val entity = entityIngestionService.findByIdInternal(workspaceId, id)
             ?: throw NotFoundException("Business definition not found: $id")
         if (entity.typeKey != KnowledgeEntityTypeKey.GLOSSARY.key) {
@@ -97,7 +80,7 @@ class WorkspaceBusinessDefinitionService(
     fun createDefinition(
         workspaceId: UUID,
         request: CreateBusinessDefinitionRequest,
-    ): WorkspaceBusinessDefinition {
+    ): GlossaryTerm {
         val userId = authTokenService.getUserId()
         return doCreate(workspaceId, userId, request)
     }
@@ -113,7 +96,7 @@ class WorkspaceBusinessDefinitionService(
         workspaceId: UUID,
         id: UUID,
         request: UpdateBusinessDefinitionRequest,
-    ): WorkspaceBusinessDefinition {
+    ): GlossaryTerm {
         val userId = authTokenService.getUserId()
         val existing = requireGlossaryEntity(workspaceId, id)
         val current = glossaryEntityProjector.project(workspaceId, existing)
@@ -195,7 +178,7 @@ class WorkspaceBusinessDefinitionService(
         workspaceId: UUID,
         userId: UUID,
         request: CreateBusinessDefinitionRequest,
-    ): WorkspaceBusinessDefinition = doCreate(workspaceId, userId, request)
+    ): GlossaryTerm = doCreate(workspaceId, userId, request)
 
     // ------ Private helpers ------
 
@@ -203,7 +186,7 @@ class WorkspaceBusinessDefinitionService(
         workspaceId: UUID,
         userId: UUID,
         request: CreateBusinessDefinitionRequest,
-    ): WorkspaceBusinessDefinition {
+    ): GlossaryTerm {
         validateTermLength(request.term)
         validateDefinitionLength(request.definition)
 

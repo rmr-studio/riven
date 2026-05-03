@@ -9,7 +9,6 @@ import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.RelationshipTargetKind
-import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.integration.SourceType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.ConflictException
@@ -228,41 +227,40 @@ class EntityRelationshipService(
     // ------ Read ------
 
     /**
-     * Finds all entity links for a source entity, grouped by definition ID.
-     * Includes both forward links (entity is source) and inverse links (entity is target).
+     * Finds all entity links touching the given entity, as a flat list.
+     *
+     * Includes:
+     *  - **Forward** edges: rows where the entity is the source (any system_type, any definition).
+     *  - **Inverse** edges: rows where the entity is the target, admitted when either a
+     *    relationship_target_rule applies, the definition's system_type is
+     *    `CONNECTED_ENTITIES`, or the definition's system_type is one of
+     *    `ATTACHMENT` / `MENTION` / `DEFINES` *and* the source entity's type carries
+     *    `surface_role = 'KNOWLEDGE'`. Knowledge inverse edges are how
+     *    "notes attached to me" / "glossary terms defining me" surface on a target entity.
+     *
+     * Each [EntityLink] carries `direction` and `systemType`, so callers
+     * (e.g. `EntityEntity.toModel`) can partition the flat list into the
+     * regular relationships map vs. the knowledge-refs projection.
      */
-    fun findRelatedEntities(entityId: UUID, workspaceId: UUID): Map<UUID, List<EntityLink>> {
+    fun findRelatedEntities(entityId: UUID, workspaceId: UUID): List<EntityLink> {
         val forward = entityRelationshipRepository.findEntityLinksBySourceId(entityId, workspaceId)
-        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetId(
-            entityId, workspaceId, SystemRelationshipType.CONNECTED_ENTITIES.name,
-        )
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetId(entityId, workspaceId)
 
-        return (forward + inverse)
-            .groupBy { it.getDefinitionId() }
-            .mapValues { (_, projections) ->
-                projections.map { it.toEntityLink() }
-            }
+        return (forward + inverse).map { it.toEntityLink() }
     }
 
     /**
-     * Finds all entity links for multiple source entities, grouped by source then definition.
-     * Includes both forward and inverse-visible links.
+     * Batch variant: flat list per source entity id. Same predicate semantics as the
+     * single-entity overload.
      */
-    fun findRelatedEntities(entityIds: Set<UUID>, workspaceId: UUID): Map<UUID, Map<UUID, List<EntityLink>>> {
+    fun findRelatedEntities(entityIds: Set<UUID>, workspaceId: UUID): Map<UUID, List<EntityLink>> {
         val ids = entityIds.toTypedArray()
         val forward = entityRelationshipRepository.findEntityLinksBySourceIdIn(ids, workspaceId)
-        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetIdIn(
-            ids, workspaceId, SystemRelationshipType.CONNECTED_ENTITIES.name,
-        )
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetIdIn(ids, workspaceId)
 
         return (forward + inverse)
             .groupBy { it.getSourceEntityId() }
-            .mapValues { (_, projections) ->
-                projections.groupBy { it.getDefinitionId() }
-                    .mapValues { (_, defProjections) ->
-                        defProjections.map { it.toEntityLink() }
-                    }
-            }
+            .mapValues { (_, projections) -> projections.map { it.toEntityLink() } }
     }
 
     /**

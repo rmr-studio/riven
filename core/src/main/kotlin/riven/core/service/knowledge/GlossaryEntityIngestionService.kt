@@ -23,7 +23,7 @@ import java.util.UUID
  * Owns the glossary input shape (term/definition/category/source/etc.) and the mapping
  * into the abstract relationship-batch contract: glossary terms can DEFINE structural
  * objects (entity types, attributes) and MENTION other entities. Single emission point
- * for both the cutover service ([WorkspaceBusinessDefinitionService]) and the legacy
+ * for both the cutover service ([GlossaryService]) and the legacy
  * backfill workflow.
  */
 @Service

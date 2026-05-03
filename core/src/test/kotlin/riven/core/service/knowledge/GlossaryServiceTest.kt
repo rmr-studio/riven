@@ -22,7 +22,7 @@ import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.ConflictException
 import riven.core.exceptions.NotFoundException
 import riven.core.models.knowledge.AttributeRef
-import riven.core.models.knowledge.WorkspaceBusinessDefinition
+import riven.core.models.knowledge.GlossaryTerm
 import riven.core.models.request.knowledge.CreateBusinessDefinitionRequest
 import riven.core.models.request.knowledge.UpdateBusinessDefinitionRequest
 import riven.core.service.activity.ActivityService
@@ -46,7 +46,7 @@ import java.util.UUID
         AuthTokenService::class,
         WorkspaceSecurity::class,
         SecurityTestConfig::class,
-        WorkspaceBusinessDefinitionService::class,
+        GlossaryService::class,
     ]
 )
 @WithUserPersona(
@@ -60,7 +60,7 @@ import java.util.UUID
         ),
     ],
 )
-class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
+class GlossaryServiceTest : BaseServiceTest() {
 
     @MockitoBean
     private lateinit var glossaryEntityIngestionService: GlossaryEntityIngestionService
@@ -75,7 +75,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
     private lateinit var activityService: ActivityService
 
     @Autowired
-    private lateinit var service: WorkspaceBusinessDefinitionService
+    private lateinit var service: GlossaryService
 
     private fun stubProjectionFor(
         id: UUID,
@@ -85,21 +85,18 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
         source: DefinitionSource = DefinitionSource.MANUAL,
         entityTypeRefs: List<UUID> = emptyList(),
         attributeRefs: List<AttributeRef> = emptyList(),
-    ): WorkspaceBusinessDefinition {
-        val def = WorkspaceBusinessDefinition(
+    ): GlossaryTerm {
+        val def = GlossaryTerm(
             id = id,
             workspaceId = workspaceId,
             term = term,
             normalizedTerm = normalizedTerm,
             definition = "definition body",
             category = category,
-            compiledParams = null,
-            status = DefinitionStatus.ACTIVE,
             source = source,
             entityTypeRefs = entityTypeRefs,
             attributeRefs = attributeRefs,
             isCustomized = false,
-            version = 0,
             createdBy = null,
             createdAt = null,
             updatedAt = null,
@@ -117,13 +114,13 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
 
     @Test
     fun `listDefinitions delegates to projector and returns all entries when no filters`() {
-        val def1 = WorkspaceBusinessDefinition(
+        val def1 = GlossaryTerm(
             id = UUID.randomUUID(), workspaceId = workspaceId,
             term = "Retention", normalizedTerm = "retention", definition = "x",
-            category = DefinitionCategory.METRIC, compiledParams = null,
-            status = DefinitionStatus.ACTIVE, source = DefinitionSource.MANUAL,
+            category = DefinitionCategory.METRIC,
+            source = DefinitionSource.MANUAL,
             entityTypeRefs = emptyList(), attributeRefs = emptyList(),
-            isCustomized = false, version = 0,
+            isCustomized = false,
             createdBy = null, createdAt = null, updatedAt = null,
         )
         val def2 = def1.copy(id = UUID.randomUUID(), term = "Churn", normalizedTerm = "churn")
@@ -147,7 +144,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
     }
 
     @Test
-    fun `listDefinitions filters by status — projector always emits ACTIVE so SUGGESTED yields empty`() {
+    fun `listDefinitions ignores status filter — glossary entities do not yet carry a per-row status`() {
         val a = stubbedDefinition()
         whenever(glossaryEntityProjector.listAll(workspaceId)).thenReturn(listOf(a))
 
@@ -155,7 +152,7 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
         val suggested = service.listDefinitions(workspaceId, status = DefinitionStatus.SUGGESTED)
 
         assertThat(active).hasSize(1)
-        assertThat(suggested).isEmpty()
+        assertThat(suggested).hasSize(1)
     }
 
     // ------ Get ------
@@ -431,20 +428,17 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
 
     private fun stubbedDefinition(
         category: DefinitionCategory = DefinitionCategory.METRIC,
-    ): WorkspaceBusinessDefinition = WorkspaceBusinessDefinition(
+    ): GlossaryTerm = GlossaryTerm(
         id = UUID.randomUUID(),
         workspaceId = workspaceId,
         term = "Retention Rate",
         normalizedTerm = "retention rate",
         definition = "definition",
         category = category,
-        compiledParams = null,
-        status = DefinitionStatus.ACTIVE,
         source = DefinitionSource.MANUAL,
         entityTypeRefs = emptyList(),
         attributeRefs = emptyList(),
         isCustomized = false,
-        version = 0,
         createdBy = null,
         createdAt = null,
         updatedAt = null,
